@@ -1,11 +1,29 @@
 use std::{fs::File, io::BufReader};
 
-use iced::widget::{button, column, text, Column};
+use iced::{widget::{button, column, text, Column}, Element};
+use indexmap::IndexMap;
 use xml::{reader::XmlEvent, EventReader};
+use DOM::{BftmlElement, Tag, TagType};
 
-#[derive(Default)]
+mod DOM;
+
 struct Counter {
     value: i64,
+    tree: BftmlElement
+}
+
+impl Default for Counter {
+    fn default() -> Self {
+        let plus = TagType::Button(Box::new(BftmlElement::Text("+".into())));
+        let plus = Tag { id: "+".into(), tag_type: plus, attributes: IndexMap::new() };
+        let minus = TagType::Button(Box::new(BftmlElement::Text("-".into())));
+        let minus = Tag { id: "-".into(), tag_type: minus, attributes: IndexMap::new() };
+        let children = vec![BftmlElement::Tag(plus), BftmlElement::Tag(minus)];
+        Self {
+            value: Default::default(),
+            tree: BftmlElement::Tag(Tag { id: "column".into(), tag_type: TagType::Column(children), attributes: IndexMap::new()})
+        }
+    }
 }
 
 impl Counter {
@@ -17,13 +35,8 @@ impl Counter {
         }
     }
 
-    fn view(&self) -> Column<Message> {
-        column![
-            button("+").on_press(Message::Increment).style(button::success),
-            text(self.value),
-            button("-").on_press(Message::Decrement),
-            button("0").on_press(Message::Set(0))
-        ]
+    fn view(&self) -> Element<Message> {
+        self.tree.clone().into()
     }
 }
 
