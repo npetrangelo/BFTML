@@ -9,22 +9,29 @@ struct Counter {
 }
 
 impl Counter {
-    fn update(&mut self, message: Set) {
-        self.value = message.value
+    fn update(&mut self, message: Message) {
+        match message {
+            Message::Increment => self.value += 1,
+            Message::Decrement => self.value -= 1,
+            Message::Set(value) => self.value = value
+        }
     }
 
-    fn view(&self) -> Column<Set> {
+    fn view(&self) -> Column<Message> {
         column![
-            button("+").on_press(Set { value: 10 }).style(button::success),
+            button("+").on_press(Message::Increment).style(button::success),
             text(self.value),
-            button("-").on_press(Set { value: -10 }),
+            button("-").on_press(Message::Decrement),
+            button("0").on_press(Message::Set(0))
         ]
     }
 }
 
 #[derive(Debug, Clone, Copy)]
-struct Set {
-    value: i64
+enum Message {
+    Increment,
+    Decrement,
+    Set(i64)
 }
 
 fn xml_file() -> std::io::Result<()> {
