@@ -1,3 +1,4 @@
-<document>
-    <foo>Bar</foo>
-</document>
+<column>
+    <button label="+"/>
+    <button label="-"/>
+</column>
