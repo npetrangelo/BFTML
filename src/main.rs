@@ -9,30 +9,22 @@ struct Counter {
 }
 
 impl Counter {
-    fn update(&mut self, message: Message) {
-        match message {
-            Message::Increment => {
-                self.value += 1;
-            }
-            Message::Decrement => {
-                self.value -= 1;
-            }
-        }
+    fn update(&mut self, message: Set) {
+        self.value = message.value
     }
 
-    fn view(&self) -> Column<Message> {
+    fn view(&self) -> Column<Set> {
         column![
-            button("+").on_press(Message::Increment).style(button::success),
+            button("+").on_press(Set { value: 10 }).style(button::success),
             text(self.value),
-            button("-").on_press(Message::Decrement),
+            button("-").on_press(Set { value: -10 }),
         ]
     }
 }
 
 #[derive(Debug, Clone, Copy)]
-enum Message {
-    Increment,
-    Decrement,
+struct Set {
+    value: i64
 }
 
 fn xml_file() -> std::io::Result<()> {
@@ -45,6 +37,7 @@ fn xml_file() -> std::io::Result<()> {
         match e {
             Ok(XmlEvent::StartElement { name, .. }) => {
                 println!("{:spaces$}+{name}", "", spaces = depth * 2);
+
                 depth += 1;
             }
             Ok(XmlEvent::EndElement { name }) => {
