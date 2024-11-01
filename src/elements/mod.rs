@@ -19,20 +19,7 @@ pub enum ParseError<'a> {
     InvalidChildren(String)
 }
 
-/// Needs to be fully my own type to get around the orphan rule
-pub enum ParseResult<'a, T> {
-    Ok(T),
-    Err(ParseError<'a>)
-}
-
-impl<'a, T> From<ParseResult<'a, T>> for Result<T, ParseError<'a>> {
-    fn from(value: ParseResult<'a, T>) -> Self {
-        match value {
-            ParseResult::Ok(t) => Ok(t),
-            ParseResult::Err(e) => Err(e),
-        }
-    }
-}
+pub type ParseResult<'a, T> = Result<T, ParseError<'a>>;
 
 impl<'a> From<ParseError<'a>> for String {
     fn from(value: ParseError) -> Self {
