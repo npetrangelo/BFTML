@@ -74,16 +74,9 @@ struct Tag<'a> {
 
 fn parse_tag2<'a>(s: &mut &'a str) -> PResult<Tag<'a>> {
     let _ = "<".parse_next(s)?;
-    let name = alt(("button", "column")).parse_next(s)?;
+    let name = alphanumeric1.parse_next(s)?;
 
     let attributes = parse_attributes.parse_next(s)?;
-
-    // while s != "" || s.chars().next() != Some('>') {
-    //     let (s, _) = " ".parse_peek(s)?;
-    //     let (s, pair) = parse_attribute(s)?;
-    //     println!("Looping");
-    //     attributes.insert(pair.0, pair.1);
-    // }
 
     let _ = ">".parse_next(s)?;
     let children = vec![];
