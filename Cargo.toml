@@ -6,4 +6,6 @@ edition = "2021"
 [dependencies]
 iced = "^0.13.1"
 indexmap = "2.6.0"
+regex = "1.11.1"
 xml = "0.8.16"
+winnow = "0.6.20"
