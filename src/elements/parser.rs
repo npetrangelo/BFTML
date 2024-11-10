@@ -1,6 +1,5 @@
-use iced::widget::button;
 use indexmap::IndexMap;
-use winnow::{ascii::{alphanumeric1, multispace0}, combinator::{alt, repeat}, error::{ErrorKind, InputError}, stream::ContainsToken, token::{literal, take_till, take_until, take_while}, IResult, PResult, Parser};
+use winnow::{ascii::{alphanumeric1, multispace0}, combinator::repeat, stream::ContainsToken, PResult, Parser};
 
 #[derive(Debug, PartialEq)]
 enum Token {

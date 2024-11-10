@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use iced::{widget::{button, Button, Column}, Element};
 use regex::Regex;
-use winnow::{token::{literal, take_till, take_while}, IResult, Parser};
+use winnow::{token::{literal, take_till}, IResult, Parser};
 
 pub enum Tag<'a, Message: Clone + 'a> {
     Button(Button<'a, Message>),
