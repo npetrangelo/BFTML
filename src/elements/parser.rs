@@ -38,18 +38,6 @@ impl<const LEN: usize> ContainsToken<Token> for [Token; LEN] {
     }
 }
 
-fn parse_tag(s: &str) -> IResult<&str, super::Tag<'_, ()>> {
-    let (s, _) = literal("<").parse_peek(s)?;
-    let (s, parsed) = alt((literal("button"), literal("column"))).parse_peek(s)?;
-    let result = match parsed {
-        "button" => Ok((s, super::Tag::Button(button("Button")))),
-        "column" => todo!(),
-        s => Err(winnow::error::ErrMode::Cut(InputError::new(s, ErrorKind::Tag))),
-    };
-    literal(">").parse_peek(s)?;
-    result
-}
-
 fn parse_attribute<'s>(s: &mut &'s str) -> PResult<(&'s str, &'s str)> {
     let _ = multispace0.parse_next(s)?;
     let key = alphanumeric1.parse_next(s)?;
@@ -72,7 +60,7 @@ struct Tag<'a> {
     children: Vec<Tag<'a>>
 }
 
-fn parse_tag2<'a>(s: &mut &'a str) -> PResult<Tag<'a>> {
+fn parse_tag<'a>(s: &mut &'a str) -> PResult<Tag<'a>> {
     let _ = "<".parse_next(s)?;
     let name = alphanumeric1.parse_next(s)?;
 
@@ -92,12 +80,12 @@ mod test {
     use crate::elements::parser::Tag;
 
     use super::parse_attribute;
-    use super::parse_tag2;
+    use super::parse_tag;
 
     #[test]
     fn test_parse_tag() {
         let mut input = "<button>";
-        let parsed = parse_tag2.parse_next(&mut input);
+        let parsed = parse_tag.parse_next(&mut input);
         assert_eq!(input, "");
         assert!(parsed.is_ok());
         let tag = parsed.unwrap();
@@ -135,7 +123,7 @@ mod test {
     #[test]
     fn test_parse_tag_attr() {
         let mut input = "<button foo=bar>";
-        let parsed = parse_tag2.parse_next(&mut input);
+        let parsed = parse_tag.parse_next(&mut input);
         assert_eq!(input, "");
         assert!(parsed.is_ok());
         let tag = parsed.unwrap();
@@ -148,7 +136,7 @@ mod test {
 
     #[test]
     fn test_parse_err() {
-        let parsed = parse_tag2.parse_next(&mut "<button");
+        let parsed = parse_tag.parse_next(&mut "<button");
         assert!(parsed.is_err());
     }
 }
