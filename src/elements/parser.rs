@@ -1,5 +1,5 @@
 use indexmap::IndexMap;
-use winnow::{ascii::{alphanumeric1, multispace0}, combinator::repeat, stream::ContainsToken, PResult, Parser};
+use winnow::{ascii::{alphanumeric1, multispace0}, combinator::repeat, PResult, Parser};
 
 #[derive(Debug, PartialEq)]
 enum Token {
@@ -7,34 +7,6 @@ enum Token {
     TagClose,
     TagElement(String),
     Attribute((String, String))
-}
-
-impl ContainsToken<Token> for Token {
-    #[inline(always)]
-    fn contains_token(&self, token: Token) -> bool {
-        *self == token
-    }
-}
-
-impl ContainsToken<Token> for &[Token] {
-    #[inline]
-    fn contains_token(&self, token: Token) -> bool {
-        self.iter().any(|t| *t == token)
-    }
-}
-
-impl<const LEN: usize> ContainsToken<Token> for &[Token; LEN] {
-    #[inline]
-    fn contains_token(&self, token: Token) -> bool {
-        self.iter().any(|t| *t == token)
-    }
-}
-
-impl<const LEN: usize> ContainsToken<Token> for [Token; LEN] {
-    #[inline]
-    fn contains_token(&self, token: Token) -> bool {
-        self.iter().any(|t| *t == token)
-    }
 }
 
 fn parse_attribute<'s>(s: &mut &'s str) -> PResult<(&'s str, &'s str)> {
