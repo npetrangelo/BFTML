@@ -1,10 +1,10 @@
 use std::str::FromStr;
 
 use indexmap::IndexMap;
-use winnow::{ascii::{alphanumeric1, multispace0}, combinator::repeat, error::{ContextError, ErrMode}, PResult, Parser};
+use winnow::{ascii::{alphanumeric1, multispace0, space0}, combinator::repeat, error::{ContextError, ErrMode}, PResult, Parser};
 
 fn parse_attribute<'s>(s: &mut &'s str) -> PResult<(&'s str, &'s str)> {
-    let _ = multispace0.parse_next(s)?;
+    let _ = space0.parse_next(s)?;
     let key = alphanumeric1.parse_next(s)?;
     let _ = "=".parse_next(s)?;
     let value = alphanumeric1.parse_next(s)?;
@@ -52,6 +52,12 @@ fn parse_tag<'a>(s: &mut &'a str) -> PResult<Tag> {
     let name: String = alphanumeric1.parse_next(s)?.into();
 
     let attributes = parse_attributes.parse_next(s)?;
+    let _ = multispace0.parse_next(s)?;
+
+    let out: PResult<&str> = "/>".parse_next(s);
+    if out.is_ok() {
+        return Ok(Tag { name, attributes, children: vec![] })
+    }
 
     let _ = ">".parse_next(s)?;
 
@@ -88,6 +94,12 @@ mod test {
     fn test_parse_tag() {
         let expected = Tag { name: "button".into(), attributes: IndexMap::new(), children: vec![] };
         assert_eq!(Ok(expected), "<button></button>".parse());
+    }
+
+    #[test]
+    fn test_parse_short_tag() {
+        let expected = Tag { name: "button".into(), attributes: IndexMap::new(), children: vec![] };
+        assert_eq!(Ok(expected), "<button />".parse());
     }
 
     #[test]
