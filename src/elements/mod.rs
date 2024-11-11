@@ -1,5 +1,3 @@
-mod parser;
-
 use std::str::FromStr;
 
 use iced::{widget::{button, Button, Column}, Element};

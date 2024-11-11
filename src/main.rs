@@ -7,6 +7,7 @@ use DOM::{BftmlElement, Tag, TagType};
 
 mod DOM;
 mod elements;
+mod parser;
 
 struct Dom {
     tree: BftmlElement
