@@ -5,13 +5,6 @@ use winnow::{ascii::{alphanumeric1, multispace0}, combinator::repeat, error::{Co
 
 use super::{attributes::parse_attributes, values::Value};
 
-fn parse_children<'s>(s: &mut &'s str) -> PResult<Vec<Tag>> {
-    repeat(0.., parse_tag).fold(Vec::new, |mut acc: Vec<Tag>, item| {
-        acc.push(item);
-        acc
-    }).parse_next(s)
-}
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tag {
     pub name: String,
@@ -55,6 +48,13 @@ fn parse_tag<'a>(s: &mut &'a str) -> PResult<Tag> {
     let _ = ">".parse_next(s)?;
 
     Ok(Tag { name, attributes, children })
+}
+
+fn parse_children<'s>(s: &mut &'s str) -> PResult<Vec<Tag>> {
+    repeat(0.., parse_tag).fold(Vec::new, |mut acc: Vec<Tag>, item| {
+        acc.push(item);
+        acc
+    }).parse_next(s)
 }
 
 impl<'a> FromStr for Tag {
