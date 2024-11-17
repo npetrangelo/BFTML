@@ -8,7 +8,7 @@ use super::{attributes, values::Value};
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tag {
     pub name: String,
-    pub attributes: IndexMap<String, Value>,
+    pub attributes: IndexMap<String, Option<Value>>,
     pub children: Vec<Tag>
 }
 
@@ -17,8 +17,12 @@ impl Tag {
         Tag { name: name.into(), attributes: IndexMap::new(), children: vec![] }
     }
 
+    pub fn set(&mut self, key: &str) {
+        self.attributes.insert(key.into(), None);
+    }
+
     pub fn with(&mut self, key: &str, value: Value) {
-        self.attributes.insert(key.into(), value);
+        self.attributes.insert(key.into(), Some(value));
     }
 
     pub fn child(&mut self, tag: Tag) {
