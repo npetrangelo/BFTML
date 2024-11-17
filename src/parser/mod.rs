@@ -1,6 +1,6 @@
-mod attributes;
-mod tags;
-mod values;
+pub mod attributes;
+pub mod tags;
+pub mod values;
 
 #[cfg(test)]
 mod test {

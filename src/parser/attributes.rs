@@ -1,13 +1,13 @@
 use indexmap::IndexMap;
 use winnow::{ascii::{alphanumeric1, space0}, combinator::repeat, PResult, Parser};
 
-use super::values::{parse_value, Value};
+use super::values::{value, Value};
 
 fn parse_attribute<'s>(s: &mut &'s str) -> PResult<(&'s str, Value)> {
     let _ = space0.parse_next(s)?;
     let key = alphanumeric1.parse_next(s)?;
     let _ = "=".parse_next(s)?;
-    let value = parse_value.parse_next(s)?;
+    let value = value.parse_next(s)?;
     Ok((key, value))
 }
 
