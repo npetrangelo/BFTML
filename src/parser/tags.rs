@@ -31,7 +31,7 @@ impl Tag {
     }
 }
 
-pub fn tag(s: &mut &str) -> PResult<Tag> {
+pub fn single(s: &mut &str) -> PResult<Tag> {
     let _ = multispace0.parse_next(s)?;
     let _ = "<".parse_next(s)?;
     let name: String = alphanumeric1.parse_next(s)?.into();
@@ -48,7 +48,7 @@ pub fn tag(s: &mut &str) -> PResult<Tag> {
 
     let _ = ">".parse_next(s)?;
 
-    let children = children.parse_next(s)?;
+    let children = many.parse_next(s)?;
 
     let _ = "</".parse_next(s)?;
     let _ = name.as_str().parse_next(s)?;
@@ -57,8 +57,8 @@ pub fn tag(s: &mut &str) -> PResult<Tag> {
     Ok(Tag { name, traits, attributes, children })
 }
 
-fn children<'s>(s: &mut &'s str) -> PResult<Vec<Tag>> {
-    repeat(0.., tag).fold(Vec::new, |mut acc: Vec<Tag>, item| {
+fn many<'s>(s: &mut &'s str) -> PResult<Vec<Tag>> {
+    repeat(0.., single).fold(Vec::new, |mut acc: Vec<Tag>, item| {
         acc.push(item);
         acc
     }).parse_next(s)
@@ -68,7 +68,7 @@ impl<'a> FromStr for Tag {
     type Err = ErrMode<ContextError>;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        tag(&mut s.clone())
+        single(&mut s.clone())
     }
 }
 
@@ -80,7 +80,7 @@ mod test {
 
     use super::Tag;
 
-    use super::children;
+    use super::many;
 
     #[test]
     fn test_parse_tag() {
@@ -96,7 +96,7 @@ mod test {
 
     #[test]
     fn test_parse_children() {
-        let parsed = children.parse_next(&mut "<foo></foo><bar></bar>");
+        let parsed = many.parse_next(&mut "<foo></foo><bar></bar>");
         let expected = vec![Tag::new("foo"), Tag::new("bar")];
         assert_eq!(expected, parsed.unwrap())
     }

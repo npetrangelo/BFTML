@@ -7,12 +7,12 @@ pub mod values;
 mod test {
     use winnow::Parser;
 
-    use crate::parser::{tags::{tag, Tag}, values::Value};
+    use crate::parser::{tags::{single, Tag}, values::Value};
 
     #[test]
     fn test_altogether() {
         let mut text = "<button default foo=\"bar\" answer=42 based=true pi=3.14 range=0..1><foo></foo></button>";
-        let parsed = tag.parse_next(&mut text);
+        let parsed = single.parse_next(&mut text);
         let mut expected = Tag::new("button");
         expected.set("default");
         expected.with("foo", Value::String("bar".into()));
