@@ -2,15 +2,6 @@ use std::ops::Range;
 
 use winnow::{ascii::{digit0, digit1}, combinator::alt, token::take_till, PResult, Parser};
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum Value {
-    String(String),
-    Int(i64),
-    Float(f64),
-    Bool(bool),
-    Range(Range<i64>),
-}
-
 fn string(s: &mut &str) -> PResult<String> {
     let _ = '"'.parse_next(s)?;
     let result = take_till(0.., ['"']).parse_next(s)?;
@@ -26,7 +17,7 @@ fn int(s: &mut &str) -> PResult<i64> {
 fn float(s: &mut &str) -> PResult<f64> {
     let left = digit0.parse_next(s)?;
     let _ = ".".parse_next(s)?;
-    let right = digit0.parse_next(s)?;
+    let right = digit1.parse_next(s)?;
     Ok(format!("{left}.{right}").parse::<f64>().expect("Should be digits"))
 }
 
@@ -44,6 +35,15 @@ fn range(s: &mut &str) -> PResult<Range<i64>> {
     let _ = "..".parse_next(s)?;
     let end = int.parse_next(s)?;
     Ok(start..end)
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Value {
+    String(String),
+    Int(i64),
+    Float(f64),
+    Bool(bool),
+    Range(Range<i64>),
 }
 
 pub fn value(s: &mut &str) -> PResult<Value> {

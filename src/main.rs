@@ -6,7 +6,6 @@ use xml::{reader::XmlEvent, EventReader};
 use DOM::{BftmlElement, Tag, TagType};
 
 mod DOM;
-mod elements;
 mod parser;
 
 struct Dom {
