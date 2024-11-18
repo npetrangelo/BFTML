@@ -1,28 +1,29 @@
 use std::str::FromStr;
 
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use winnow::{ascii::{alphanumeric1, multispace0}, combinator::repeat, error::{ContextError, ErrMode}, PResult, Parser};
 
-use super::{attributes, values::Value};
+use super::{traits, attributes, values::Value};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tag {
     pub name: String,
-    pub attributes: IndexMap<String, Option<Value>>,
+    pub traits: IndexSet<String>,
+    pub attributes: IndexMap<String, Value>,
     pub children: Vec<Tag>
 }
 
 impl Tag {
     pub fn new(name: &str) -> Self {
-        Tag { name: name.into(), attributes: IndexMap::new(), children: vec![] }
+        Tag { name: name.into(), traits: IndexSet::new(), attributes: IndexMap::new(), children: vec![] }
     }
 
     pub fn set(&mut self, key: &str) {
-        self.attributes.insert(key.into(), None);
+        self.traits.insert(key.into());
     }
 
     pub fn with(&mut self, key: &str, value: Value) {
-        self.attributes.insert(key.into(), Some(value));
+        self.attributes.insert(key.into(), value);
     }
 
     pub fn child(&mut self, tag: Tag) {
@@ -30,17 +31,19 @@ impl Tag {
     }
 }
 
-fn tag<'a>(s: &mut &'a str) -> PResult<Tag> {
+pub fn tag(s: &mut &str) -> PResult<Tag> {
     let _ = multispace0.parse_next(s)?;
     let _ = "<".parse_next(s)?;
     let name: String = alphanumeric1.parse_next(s)?.into();
+
+    let traits = traits::many.parse_next(s)?;
 
     let attributes = attributes::many.parse_next(s)?;
     let _ = multispace0.parse_next(s)?;
 
     let out: PResult<&str> = "/>".parse_next(s);
     if out.is_ok() {
-        return Ok(Tag { name, attributes, children: vec![] })
+        return Ok(Tag { name, traits, attributes, children: vec![] })
     }
 
     let _ = ">".parse_next(s)?;
@@ -51,7 +54,7 @@ fn tag<'a>(s: &mut &'a str) -> PResult<Tag> {
     let _ = name.as_str().parse_next(s)?;
     let _ = ">".parse_next(s)?;
 
-    Ok(Tag { name, attributes, children })
+    Ok(Tag { name, traits, attributes, children })
 }
 
 fn children<'s>(s: &mut &'s str) -> PResult<Vec<Tag>> {
@@ -72,6 +75,7 @@ impl<'a> FromStr for Tag {
 #[cfg(test)]
 mod test {
     use indexmap::IndexMap;
+    use indexmap::IndexSet;
     use winnow::Parser;
 
     use super::Tag;
@@ -80,13 +84,13 @@ mod test {
 
     #[test]
     fn test_parse_tag() {
-        let expected = Tag { name: "button".into(), attributes: IndexMap::new(), children: vec![] };
+        let expected = Tag { name: "button".into(), traits: IndexSet::new(), attributes: IndexMap::new(), children: vec![] };
         assert_eq!(Ok(expected), "<button></button>".parse());
     }
 
     #[test]
     fn test_parse_short_tag() {
-        let expected = Tag { name: "button".into(), attributes: IndexMap::new(), children: vec![] };
+        let expected = Tag { name: "button".into(), traits: IndexSet::new(), attributes: IndexMap::new(), children: vec![] };
         assert_eq!(Ok(expected), "<button />".parse());
     }
 
