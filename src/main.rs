@@ -74,7 +74,7 @@ fn xml_file(file: File) -> Result<Dom, ParseError> {
 }
 
 fn init_dom() -> (Dom, Task<Message>) {
-    let mut dom = Dom { tree: BftmlElement::Text("Placeholder".into()) };
+    let mut dom = Dom::default();
     (dom, Task::none())
 }
 
