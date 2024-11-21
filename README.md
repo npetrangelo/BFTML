@@ -16,6 +16,13 @@ The standard, so far, includes a consistent tag syntax as follows:
 
 Optionally, tags may self close with `<tag />`.
 
+As an example, BFTML syntax may look like so:
+```xml
+<button default foo="bar" answer=42 based=true pi=3.14 range=0..1>
+    <foo />
+</button>
+```
+
 You can verify that this syntax is supported by cloning the repo
 and calling `cargo test` in your command line.
 
