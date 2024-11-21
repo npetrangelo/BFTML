@@ -10,7 +10,12 @@ The standard, so far, includes a consistent tag syntax as follows:
 ```
 1. The `name` specifies which tag it is.
 2. This is followed by the `presets`, listed in sequence.
-3. Next comes the `attributes`, each with a key and value.
+3. Next comes the `attributes`, each with a key and value. Attributes can have the following value types:
+    - Strings
+    - Integers
+    - Floats
+    - Booleans
+    - Ranges
 4. After the opening tag, `children` can be any number of tags.
 5. Last is the closing tag, which must repeat the name of the tag.
 
