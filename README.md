@@ -22,7 +22,7 @@ and calling `cargo test` in your command line.
 ## Approximate Future Roadmap
 
 Next, I plan to add support for various concrete tags.
-I am still working out which tags I want to have in my standard,
+I am still working out which tags I want to have in BFTML,
 but when I add them, they will be type safe in that tags will only permit certain presets and attributes, and may also have stipulations on the number of children they may have.
 
 Tags that do not adhere to these type rules will log an error,
