@@ -1,5 +1,5 @@
 # Blazingly Fast Text Markup Language
-BFTML is a set of standards and reference implementation for web apps designed with the current and future needs of the web ecosystem in mind.
+BFTML is a set of standards and reference implementation for web apps designed with the current and future needs of the web app ecosystem in mind.
 
 The standard, so far, includes a consistent tag syntax as follows:
 
