@@ -14,4 +14,11 @@ Element ideas:
 - Layout: Can have any number of children
     - `flex`: Uses flexbox algorithm. Has primary and secondary axes. Has `row` and `col` presets.
 
-Now looking at React Native for inspiration on which tags to support.
+Reading this book for inspiration on which elements to support.
+https://atomicdesign.bradfrost.com/
+
+At a cursory examination, I suspect that
+atoms should be supported as primitive elements,
+molecules should be provided in component libraries,
+some organisms may be supported in component libraries,
+and the rest is application specific.
