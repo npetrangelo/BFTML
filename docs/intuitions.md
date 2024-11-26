@@ -1,4 +1,4 @@
-# Motivations
+# Intuitions
 Over the years of building upon the foundations of html, css, and js, their limitations have become clear.
 BFTML is a modern set of web standards, and reference implementation, that seeks to rectify these limitations.
 
