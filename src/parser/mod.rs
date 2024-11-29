@@ -11,7 +11,7 @@ mod test {
 
     #[test]
     fn test_altogether() {
-        let mut text = "<button default foo=\"bar\" answer=42 based=true pi=3.14 range=0..1><foo></foo></button>";
+        let mut text = "<button default foo=\"bar\" answer=42 based=true pi=3.14 range=0..1><foo /></button>";
         let parsed = single.parse_next(&mut text);
         let mut expected = Tag::new("button");
         expected.set("default");
@@ -20,7 +20,7 @@ mod test {
         expected.with("based", Value::Bool(true));
         expected.with("pi", Value::Float(3.14));
         expected.with("range", Value::Range(0..1));
-        expected.child(Tag::new("foo"));
+        expected.children(vec![Tag::new("foo")]);
         println!("{text}");
         assert_eq!(expected, parsed.unwrap());
     }

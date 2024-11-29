@@ -5,7 +5,7 @@ The standard, so far, includes a consistent tag syntax as follows:
 
 ```
 <name presets attributes>
-    {children}
+    {children | content}
 </name>
 ```
 1. The `name` specifies which tag it is.
@@ -16,7 +16,8 @@ The standard, so far, includes a consistent tag syntax as follows:
     - Floats
     - Booleans
     - Ranges
-4. After the opening tag, `children` can be any number of tags.
+4. Within the tag, you can either have one or more tags as `children`,
+or anything else as `content`.
 5. Last is the closing tag, which must repeat the name of the tag.
 
 Optionally, tags may self close with `<tag />`.
