@@ -22,6 +22,9 @@ or anything else as `content`.
 
 Optionally, tags may self close with `<tag />`.
 
+Note that `children` and `content` cannot be mixed,
+and you cannot have both simultaneously.
+
 As an example, BFTML syntax may look like so:
 ```xml
 <button default foo="bar" answer=42 based=true pi=3.14 range=0..1>
