@@ -4,21 +4,24 @@ everything is subject to change.
 
 ---
 
-Element ideas:
+Primitive element ideas:
 - Behavioral: Adds a behavior to its single child element.
     - `click`: Has `action` attribute.
     - `hover`: Has `action` attribute.
     - `link`: Has a `url` attribute. Opens url when clicked.
-- Content: Directly draws to the screen. Cannot have child elements.
-    - `text`: Any and all text; might have `h1`, `h2`, `p` etc as presets. Cannot have children. Can have fonts, size, color.
-    - `img`: Has `path` attribute.
-- Decoration: Modifies single child element.
-    - `border`: Has `top`, `left`, `bottom`, `right`, `style` attributes
-    - `margin`: Has `top`, `left`, `bottom`, `right` attributes
-    - `onion`: Has `opacity` attribute
-- Layout: Draws its children. Can have any number of children.
-    - `flex`: Uses flexbox algorithm. Has primary and secondary axes. Has `row` and `col` presets.
-    - `layers`: Places children on top of each other.
+- Graphical: Draws to the screen.
+    - Content: Renders content on screen. No children.
+        - `text`: Any and all text; might have `h1`, `h2`, `p` etc as presets. Cannot have children. Can have fonts, size, color.
+        - `img`: Has `path` attribute.
+    - Decoration: Renders stuff around single child.
+        - `border`: Has `top`, `left`, `bottom`, `right`, `style` attributes
+        - `margin`: Has `top`, `left`, `bottom`, `right` attributes
+        - `onion`: Has `opacity` attribute
+    - Layout: Distributes its children on screen.
+        - `flex`: Uses flexbox algorithm. Has primary and secondary axes. Has `row` and `col` presets.
+        - `layers`: Places children on top of each other.
+
+Custom primitives only supported for graphical elements
 
 Reading this book for inspiration on which elements to support.
 https://atomicdesign.bradfrost.com/
