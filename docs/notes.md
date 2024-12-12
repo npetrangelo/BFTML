@@ -12,8 +12,13 @@ Element ideas:
 - Content: Directly draws to the screen. Cannot have child elements.
     - `text`: Any and all text; might have `h1`, `h2`, `p` etc as presets. Cannot have children. Can have fonts, size, color.
     - `img`: Has `path` attribute.
+- Decoration: Modifies single child element.
+    - `border`: Has `top`, `left`, `bottom`, `right`, `style` attributes
+    - `margin`: Has `top`, `left`, `bottom`, `right` attributes
+    - `onion`: Has `opacity` attribute
 - Layout: Draws its children. Can have any number of children.
     - `flex`: Uses flexbox algorithm. Has primary and secondary axes. Has `row` and `col` presets.
+    - `layers`: Places children on top of each other.
 
 Reading this book for inspiration on which elements to support.
 https://atomicdesign.bradfrost.com/
