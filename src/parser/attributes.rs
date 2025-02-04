@@ -1,9 +1,9 @@
 use indexmap::IndexMap;
-use winnow::{ascii::{alphanumeric1, space0}, combinator::repeat, PResult, Parser};
+use winnow::{ascii::{alphanumeric1, space0}, combinator::repeat, Result, Parser};
 
 use super::values::{value, Value};
 
-pub fn single<'s>(s: &mut &'s str) -> PResult<(&'s str, Value)> {
+pub fn single<'s>(s: &mut &'s str) -> Result<(&'s str, Value)> {
     let _ = space0.parse_next(s)?;
     let key = alphanumeric1.parse_next(s)?;
     let _ = "=".parse_next(s)?;
@@ -11,7 +11,7 @@ pub fn single<'s>(s: &mut &'s str) -> PResult<(&'s str, Value)> {
     Ok((key, value))
 }
 
-pub fn many<'s>(s: &mut &'s str) -> PResult<IndexMap<String, Value>> {
+pub fn many<'s>(s: &mut &'s str) -> Result<IndexMap<String, Value>> {
     repeat(0.., single).fold(IndexMap::new, |mut acc: IndexMap<_, _>, item| {
         acc.insert(item.0.into(), item.1.into());
         acc

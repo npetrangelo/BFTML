@@ -1,7 +1,7 @@
 use indexmap::IndexSet;
-use winnow::{ascii::{alphanumeric1, space0}, combinator::{not, repeat}, PResult, Parser};
+use winnow::{ascii::{alphanumeric1, space0}, combinator::{not, repeat}, Result, Parser};
 
-pub fn single<'s>(s: &mut &'s str) -> PResult<&'s str> {
+pub fn single<'s>(s: &mut &'s str) -> Result<&'s str> {
     let _ = space0.parse_next(s)?;
     let key = alphanumeric1.parse_next(s)?;
     // Do not greedily consume attribute key
@@ -9,7 +9,7 @@ pub fn single<'s>(s: &mut &'s str) -> PResult<&'s str> {
     Ok(key)
 }
 
-pub fn many<'s>(s: &mut &'s str) -> PResult<IndexSet<String>> {
+pub fn many<'s>(s: &mut &'s str) -> Result<IndexSet<String>> {
     repeat(0.., single).fold(IndexSet::new, |mut acc: IndexSet<_>, item| {
         acc.insert(item.into());
         acc

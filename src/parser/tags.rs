@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use indexmap::{IndexMap, IndexSet};
-use winnow::{ascii::{alphanumeric1, multispace0}, combinator::{alt, not, repeat}, error::{ContextError, ErrMode}, token::take_till, PResult, Parser};
+use winnow::{ascii::{alphanumeric1, multispace0}, combinator::{alt, not, repeat}, error::{ContextError, ErrMode}, token::take_till, Result, Parser};
 
 use super::{traits, attributes, values::Value};
 
@@ -42,7 +42,7 @@ impl Tag {
     }
 }
 
-pub fn single(s: &mut &str) -> PResult<Tag> {
+pub fn single(s: &mut &str) -> Result<Tag> {
     let _ = multispace0.parse_next(s)?;
     let _ = "<".parse_next(s)?;
     let name: String = alphanumeric1.parse_next(s)?.into();
@@ -52,7 +52,7 @@ pub fn single(s: &mut &str) -> PResult<Tag> {
     let attributes = attributes::many.parse_next(s)?;
     let _ = multispace0.parse_next(s)?;
 
-    let out: PResult<&str> = "/>".parse_next(s);
+    let out: Result<&str> = "/>".parse_next(s);
     if out.is_ok() {
         return Ok(Tag { name, traits, attributes, inner: Inner::None })
     }
@@ -61,7 +61,7 @@ pub fn single(s: &mut &str) -> PResult<Tag> {
 
 
     let inner = alt((
-        many.map(|children| Inner::Children(children)),        content.map(|content| Inner::Content(content.into())),
+        many.map(|children| Inner::Children(children)),
         content.map(|content| Inner::Content(content.into())),
     )).parse_next(s)?;
     println!("{:?}", inner);
@@ -73,19 +73,19 @@ pub fn single(s: &mut &str) -> PResult<Tag> {
     Ok(Tag { name, traits, attributes, inner })
 }
 
-fn many<'s>(s: &mut &'s str) -> PResult<Vec<Tag>> {
+fn many<'s>(s: &mut &'s str) -> Result<Vec<Tag>> {
     repeat(1.., single).fold(Vec::new, |mut acc: Vec<Tag>, item| {
         acc.push(item);
         acc
     }).parse_next(s)
 }
 
-fn content<'s>(s: &mut &'s str) -> PResult<&'s str> {
+fn content<'s>(s: &mut &'s str) -> Result<&'s str> {
     take_till(0.., '<').parse_next(s)
 }
 
 impl<'a> FromStr for Tag {
-    type Err = ErrMode<ContextError>;
+    type Err = ContextError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         single(&mut s.clone())

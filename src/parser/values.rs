@@ -1,27 +1,27 @@
 use std::ops::Range;
 
-use winnow::{ascii::{digit0, digit1}, combinator::alt, token::take_till, PResult, Parser};
+use winnow::{ascii::{digit0, digit1}, combinator::alt, token::take_till, Result, Parser};
 
-fn string(s: &mut &str) -> PResult<String> {
+fn string(s: &mut &str) -> Result<String> {
     let _ = '"'.parse_next(s)?;
     let result = take_till(0.., ['"']).parse_next(s)?;
     let _ = '"'.parse_next(s)?;
     Ok(result.into())
 }
 
-fn int(s: &mut &str) -> PResult<i64> {
+fn int(s: &mut &str) -> Result<i64> {
     let result = digit1.parse_next(s)?;
     Ok(result.parse::<i64>().expect("Should only be digits"))
 }
 
-fn float(s: &mut &str) -> PResult<f64> {
+fn float(s: &mut &str) -> Result<f64> {
     let left = digit0.parse_next(s)?;
     let _ = ".".parse_next(s)?;
     let right = digit1.parse_next(s)?;
     Ok(format!("{left}.{right}").parse::<f64>().expect("Should be digits"))
 }
 
-fn bool(s: &mut &str) -> PResult<bool> {
+fn bool(s: &mut &str) -> Result<bool> {
     let result = alt(["true", "false"]).parse_next(s)?;
     match result {
         "true" => Ok(true),
@@ -30,7 +30,7 @@ fn bool(s: &mut &str) -> PResult<bool> {
     }
 }
 
-fn range(s: &mut &str) -> PResult<Range<i64>> {
+fn range(s: &mut &str) -> Result<Range<i64>> {
     let start = int.parse_next(s)?;
     let _ = "..".parse_next(s)?;
     let end = int.parse_next(s)?;
@@ -46,7 +46,7 @@ pub enum Value {
     Range(Range<i64>),
 }
 
-pub fn value(s: &mut &str) -> PResult<Value> {
+pub fn value(s: &mut &str) -> Result<Value> {
     alt((
         string.map(|s| Value::String(s)),
         range.map(|r| Value::Range(r)),
