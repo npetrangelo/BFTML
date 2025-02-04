@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-iced = "^0.13.1"
+bytemuck = { version = "1.21.0", features = [ "derive" ] }
 indexmap = "2.7.1"
-regex = "1.11.1"
-xml = "0.8.16"
+pollster = "0.4.0"
+wgpu = "24.0.1"
 winnow = "0.7.1"
+winit = { version = "0.30.8", features = ["rwh_05"] }
