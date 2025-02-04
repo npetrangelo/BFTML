@@ -1,13 +1,14 @@
 use std::sync::Arc;
 
-use winit::{application::ApplicationHandler, event::{ElementState, KeyEvent, WindowEvent}, keyboard::{KeyCode, PhysicalKey}, window::Window};
+use winit::{application::ApplicationHandler, event::{ElementState, KeyEvent, WindowEvent}, event_loop::ActiveEventLoop, keyboard::{KeyCode, PhysicalKey}, window::Window};
 
+use crate::graphics::Graphics;
 
 #[derive(Default)]
 pub enum App {
     #[default]
     Paused,
-    Running(Arc<Window>)
+    Running(Arc<Window>, Graphics)
 }
 
 impl ApplicationHandler for App {
@@ -15,7 +16,12 @@ impl ApplicationHandler for App {
         let window = Arc::new(event_loop.create_window(
             Window::default_attributes().with_title("Learn WGPU")
         ).unwrap());
-        *self = Self::Running(window);
+        let graphics = Graphics::new(window.clone());
+        *self = Self::Running(window, graphics);
+    }
+
+    fn suspended(&mut self, event_loop: &ActiveEventLoop) {
+        *self = Self::Paused;
     }
 
     fn window_event(
@@ -37,6 +43,21 @@ impl ApplicationHandler for App {
             } => {
                 println!("The close button was pressed; stopping");
                 event_loop.exit();
+            },
+            WindowEvent::RedrawRequested => {
+                match self {
+                    App::Paused => todo!(),
+                    App::Running(window, graphics) => {
+                        // graphics.render();
+                        window.request_redraw();
+                    }
+                }
+            },
+            WindowEvent::Resized(physical_size) => {
+                match self {
+                    App::Paused => todo!(),
+                    App::Running(window, graphics) => graphics.resize(physical_size),
+                }
             },
             _ => (),
         }
