@@ -3,6 +3,8 @@ use std::{borrow::Cow, sync::Arc};
 use wgpu::{util::DeviceExt, Buffer, RenderPipeline, Surface, SurfaceCapabilities};
 use winit::window::Window;
 
+use crate::mesh::Mesh;
+
 const BLACK: wgpu::Color = wgpu::Color { r: 0., g: 0., b: 0., a: 1. };
 
 pub struct Buffers {
@@ -11,7 +13,7 @@ pub struct Buffers {
     num_indices: u32
 }
 
-trait Vertex<'a, const SIZE: usize>: bytemuck::Pod {
+pub trait Vertex<'a, const SIZE: usize>: bytemuck::Pod {
     const ATTRIBS: [wgpu::VertexAttribute; SIZE];
 
     fn desc() -> wgpu::VertexBufferLayout<'a> {
@@ -62,11 +64,11 @@ impl GPU {
         surface_caps)
     }
 
-    fn buffers<V: Vertex<'static, 2>>(&self, v: &[V], i: &[u32]) -> Buffers {
+    fn buffers(&self, mesh: &Mesh) -> Buffers {
         let vertices = self.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(v),
+                contents: bytemuck::cast_slice(mesh.vertices.as_slice()),
                 usage: wgpu::BufferUsages::VERTEX,
             }
         );
@@ -74,14 +76,14 @@ impl GPU {
         let indices = self.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(i),
+                contents: bytemuck::cast_slice(mesh.indices.as_slice()),
                 usage: wgpu::BufferUsages::INDEX,
             }
         );
         Buffers {
             vertices,
             indices,
-            num_indices: i.len() as u32,
+            num_indices: mesh.indices.len() as u32,
         }
     }
 
@@ -172,7 +174,7 @@ impl Graphics {
         }
     }
 
-    fn pipeline<V: Vertex<'static, 2>>(&self, path: &str) -> RenderPipeline {
+    pub fn pipeline<V: Vertex<'static, 2>>(&self, path: &str) -> RenderPipeline {
         let source = std::fs::read_to_string(path).expect("reading shader failed");
         let shader = self.gpu.device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("test"),
@@ -229,6 +231,11 @@ impl Graphics {
             multiview: None, // 5.
             cache: None, // 6.
         });
+    }
+
+    pub fn render(&self, pipeline: &RenderPipeline, mesh: &Mesh) {
+        let buffers = self.gpu.buffers(mesh);
+        self.gpu.render(&self.surface, pipeline, &buffers);
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {

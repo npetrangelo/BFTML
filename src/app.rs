@@ -2,13 +2,13 @@ use std::sync::Arc;
 
 use winit::{application::ApplicationHandler, event::{ElementState, KeyEvent, WindowEvent}, event_loop::ActiveEventLoop, keyboard::{KeyCode, PhysicalKey}, window::Window};
 
-use crate::graphics::Graphics;
+use crate::{graphics::Graphics, mesh::{Mesh, Point}};
 
 #[derive(Default)]
 pub enum App {
     #[default]
     Paused,
-    Running(Arc<Window>, Graphics)
+    Running(Arc<Window>, Graphics, Mesh)
 }
 
 impl ApplicationHandler for App {
@@ -17,7 +17,8 @@ impl ApplicationHandler for App {
             Window::default_attributes().with_title("Learn WGPU")
         ).unwrap());
         let graphics = Graphics::new(window.clone());
-        *self = Self::Running(window, graphics);
+        let mesh = Mesh::default();
+        *self = Self::Running(window, graphics, mesh);
     }
 
     fn suspended(&mut self, event_loop: &ActiveEventLoop) {
@@ -47,8 +48,9 @@ impl ApplicationHandler for App {
             WindowEvent::RedrawRequested => {
                 match self {
                     App::Paused => todo!(),
-                    App::Running(window, graphics) => {
-                        // graphics.render();
+                    App::Running(window, graphics, mesh) => {
+                        let pipeline = graphics.pipeline::<Point>("src/test.wgsl");
+                        graphics.render(&pipeline, mesh);
                         window.request_redraw();
                     }
                 }
@@ -56,7 +58,7 @@ impl ApplicationHandler for App {
             WindowEvent::Resized(physical_size) => {
                 match self {
                     App::Paused => todo!(),
-                    App::Running(window, graphics) => graphics.resize(physical_size),
+                    App::Running(window, graphics, mesh) => graphics.resize(physical_size),
                 }
             },
             _ => (),
