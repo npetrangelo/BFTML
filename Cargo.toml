@@ -8,5 +8,5 @@ bytemuck = { version = "1.21.0", features = [ "derive" ] }
 indexmap = "2.7.1"
 pollster = "0.4.0"
 wgpu = "24.0.1"
-winnow = "0.7.1"
-winit = { version = "0.30.8", features = ["rwh_05"] }
+winnow = "0.7.2"
+winit = { version = "0.30.9", features = ["rwh_05"] }

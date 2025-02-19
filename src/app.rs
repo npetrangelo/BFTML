@@ -58,11 +58,10 @@ impl ApplicationHandler for App {
             WindowEvent::Resized(physical_size) => {
                 match self {
                     App::Paused => todo!(),
-                    App::Running(window, graphics, mesh) => graphics.resize(physical_size),
+                    App::Running(_, graphics, _) => graphics.resize(physical_size),
                 }
             },
             _ => (),
         }
     }
 }
-

@@ -3,7 +3,7 @@ use std::{borrow::Cow, sync::Arc};
 use wgpu::{util::DeviceExt, Buffer, RenderPipeline, Surface, SurfaceCapabilities};
 use winit::window::Window;
 
-use crate::mesh::Mesh;
+use crate::mesh::{Mesh, VertexLayout};
 
 const BLACK: wgpu::Color = wgpu::Color { r: 0., g: 0., b: 0., a: 1. };
 
@@ -11,20 +11,6 @@ pub struct Buffers {
     vertices: Buffer,
     indices: Buffer,
     num_indices: u32
-}
-
-pub trait Vertex<'a, const SIZE: usize>: bytemuck::Pod {
-    const ATTRIBS: [wgpu::VertexAttribute; SIZE];
-
-    fn desc() -> wgpu::VertexBufferLayout<'a> {
-        use std::mem;
-
-        wgpu::VertexBufferLayout {
-            array_stride: mem::size_of::<Self>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &Self::ATTRIBS,
-        }
-    }
 }
 
 pub struct GPU {
@@ -174,7 +160,7 @@ impl Graphics {
         }
     }
 
-    pub fn pipeline<V: Vertex<'static, 2>>(&self, path: &str) -> RenderPipeline {
+    pub fn pipeline<V: VertexLayout<'static, 2>>(&self, path: &str) -> RenderPipeline {
         let source = std::fs::read_to_string(path).expect("reading shader failed");
         let shader = self.gpu.device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("test"),
@@ -211,9 +197,9 @@ impl Graphics {
             }),
             // continued ...
             primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList, // 1.
+                topology: wgpu::PrimitiveTopology::TriangleStrip, // 1.
                 strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw, // 2.
+                front_face: wgpu::FrontFace::Cw, // 2.
                 cull_mode: Some(wgpu::Face::Back),
                 // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
@@ -233,9 +219,9 @@ impl Graphics {
         });
     }
 
-    pub fn render(&self, pipeline: &RenderPipeline, mesh: &Mesh) {
+    pub fn render(&self, pipeline: &RenderPipeline, mesh: &Mesh) -> Result<(), wgpu::SurfaceError> {
         let buffers = self.gpu.buffers(mesh);
-        self.gpu.render(&self.surface, pipeline, &buffers);
+        self.gpu.render(&self.surface, pipeline, &buffers)
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
