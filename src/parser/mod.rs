@@ -14,13 +14,13 @@ mod test {
         let mut text = "<button default foo=\"bar\" answer=42 based=true pi=3.14 range=0..1><foo /></button>";
         let parsed = single.parse_next(&mut text);
         let mut expected = Tag::new("button");
-        expected.set("default");
-        expected.with("foo", Value::String("bar".into()));
-        expected.with("answer", Value::Int(42));
-        expected.with("based", Value::Bool(true));
-        expected.with("pi", Value::Float(3.14));
-        expected.with("range", Value::Range(0..1));
-        expected.children(vec![Tag::new("foo")]);
+        expected.set("default")
+            .with("foo", Value::String("bar".into()))
+            .with("answer", Value::Int(42))
+            .with("based", Value::Bool(true))
+            .with("pi", Value::Float(3.14))
+            .with("range", Value::Range(0..1))
+            .children(vec![Tag::new("foo")]);
         println!("{text}");
         assert_eq!(expected, parsed.unwrap());
     }

@@ -25,20 +25,24 @@ impl Tag {
         Tag { name: name.into(), traits: IndexSet::new(), attributes: IndexMap::new(), inner: Inner::None }
     }
 
-    pub fn set(&mut self, key: &str) {
+    pub fn set(&mut self, key: &str) -> &mut Self {
         self.traits.insert(key.into());
+        self
     }
 
-    pub fn with(&mut self, key: &str, value: Value) {
+    pub fn with(&mut self, key: &str, value: Value) -> &mut Self {
         self.attributes.insert(key.into(), value);
+        self
     }
 
-    pub fn content(&mut self, content: &str) {
-        self.inner = Inner::Content(content.into())
+    pub fn content(&mut self, content: &str) -> &mut Self {
+        self.inner = Inner::Content(content.into());
+        self
     }
 
-    pub fn children(&mut self, tags: Vec<Tag>) {
+    pub fn children(&mut self, tags: Vec<Tag>) -> &mut Self {
         self.inner = Inner::Children(tags);
+        self
     }
 }
 
