@@ -2,13 +2,13 @@ use std::sync::Arc;
 
 use winit::{application::ApplicationHandler, event::{ElementState, KeyEvent, WindowEvent}, event_loop::ActiveEventLoop, keyboard::{KeyCode, PhysicalKey}, window::Window};
 
-use crate::{graphics::Graphics, mesh::{Mesh, Point}};
+use crate::{elements::rect::{Point, Rect}, graphics::{geometry::Geometry, Graphics, Material}};
 
 #[derive(Default)]
 pub enum App {
     #[default]
     Paused,
-    Running(Arc<Window>, Graphics, Mesh)
+    Running(Arc<Window>, Graphics, Geometry<Point>)
 }
 
 impl ApplicationHandler for App {
@@ -17,8 +17,11 @@ impl ApplicationHandler for App {
             Window::default_attributes().with_title("Learn WGPU")
         ).unwrap());
         let graphics = Graphics::new(window.clone());
-        let mesh = Mesh::default();
-        *self = Self::Running(window, graphics, mesh);
+        let rect = Rect {
+            center: (0., 0.),
+            size: (0.75, 0.5),
+        };
+        *self = Self::Running(window, graphics, rect.into());
     }
 
     fn suspended(&mut self, event_loop: &ActiveEventLoop) {
@@ -48,9 +51,10 @@ impl ApplicationHandler for App {
             WindowEvent::RedrawRequested => {
                 match self {
                     App::Paused => todo!(),
-                    App::Running(window, graphics, mesh) => {
-                        let pipeline = graphics.pipeline::<Point>("src/test.wgsl");
-                        graphics.render(&pipeline, mesh);
+                    App::Running(window, graphics, geometry) => {
+                        let material = Material::new("src/shaders/test.wgsl");
+                        let (pipeline, groups) = graphics.pipeline::<Point>(&material);
+                        let _ = graphics.render::<Point>(&pipeline, groups, geometry);
                         window.request_redraw();
                     }
                 }
