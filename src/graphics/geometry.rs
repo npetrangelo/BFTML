@@ -1,10 +1,10 @@
-use bytemuck::Pod;
+use bytemuck::NoUninit;
 use wgpu::util::BufferInitDescriptor;
 use wgpu_macros::VertexLayout;
 
 use super::Bufferize;
 
-pub trait Vertex: Pod + VertexLayout {}
+pub trait Vertex: NoUninit + VertexLayout {}
 
 impl<V: Vertex> Bufferize for Vec<V> {
     fn descriptor(&self) -> BufferInitDescriptor {

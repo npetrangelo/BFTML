@@ -1,34 +1,28 @@
 use wgpu::{util::BufferInitDescriptor, BindGroupLayoutEntry, ShaderStages};
+use zerocopy::{Immutable, IntoBytes};
 
 use super::Bufferize;
 
 #[derive(Clone, Copy)]
-pub enum Buffer<T> {
+pub enum Buffer<T: Immutable + IntoBytes> {
     UNIFORM(T),
     STORAGE(T)
 }
 
-unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
-    ::core::slice::from_raw_parts(
-        (p as *const T) as *const u8,
-        ::core::mem::size_of::<T>(),
-    )
-}
-
-impl<T> Bufferize for Buffer<T> {
+impl<T: Immutable + IntoBytes> Bufferize for Buffer<T> {
     fn descriptor(&self) -> BufferInitDescriptor {
         match self {
             Buffer::UNIFORM(b) => {
                 BufferInitDescriptor {
                     label: Some("Uniform buffer"),
-                    contents: unsafe { any_as_u8_slice(b) },
+                    contents: b.as_bytes(),
                     usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
                 }
             },
             Buffer::STORAGE(b) => {
                 BufferInitDescriptor {
                     label: Some("Storage buffer"),
-                    contents: unsafe { any_as_u8_slice(b) },
+                    contents: b.as_bytes(),
                     usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
                 }
             },
@@ -40,7 +34,7 @@ pub trait Binding {
     fn bind(&self, binding: u32, visibility: ShaderStages) -> BindGroupLayoutEntry;
 }
 
-impl<T> Binding for Buffer<T> {
+impl<T: Immutable + IntoBytes> Binding for Buffer<T> {
     fn bind(&self, binding: u32, visibility: ShaderStages) -> BindGroupLayoutEntry {
         use wgpu::BufferBindingType::*;
         let ty = match self {
@@ -87,7 +81,7 @@ impl<'a> Bindings<'a> {
     Doing it this way lets the `BufferGroupDescriptor` accept uniform and storage buffers of different types into
     the same vecs, because they will all yield a `BindGroupLayoutEntry` and `BufferInitDescriptor` regardless. 
     */
-    pub fn bind<T>(&mut self, buffer: &'a Buffer<T>, visibility: ShaderStages) {
+    pub fn bind<T: Immutable + IntoBytes>(&mut self, buffer: &'a Buffer<T>, visibility: ShaderStages) {
         self.layouts.push(buffer.bind(self.layouts.len() as u32, visibility));
         self.buffers.push(buffer.descriptor());
     }
