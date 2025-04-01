@@ -1,28 +1,28 @@
+use bytemuck::{bytes_of, NoUninit};
 use wgpu::{util::BufferInitDescriptor, BindGroupLayoutEntry, ShaderStages};
-use zerocopy::{Immutable, IntoBytes};
 
 use super::Bufferize;
 
 #[derive(Clone, Copy)]
-pub enum Buffer<T: Immutable + IntoBytes> {
+pub enum Buffer<T: NoUninit> {
     UNIFORM(T),
     STORAGE(T)
 }
 
-impl<T: Immutable + IntoBytes> Bufferize for Buffer<T> {
+impl<T: NoUninit> Bufferize for Buffer<T> {
     fn descriptor(&self) -> BufferInitDescriptor {
         match self {
             Buffer::UNIFORM(b) => {
                 BufferInitDescriptor {
                     label: Some("Uniform buffer"),
-                    contents: b.as_bytes(),
+                    contents: bytes_of(b),
                     usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
                 }
             },
             Buffer::STORAGE(b) => {
                 BufferInitDescriptor {
                     label: Some("Storage buffer"),
-                    contents: b.as_bytes(),
+                    contents: bytes_of(b),
                     usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
                 }
             },
@@ -34,7 +34,7 @@ pub trait Binding {
     fn bind(&self, binding: u32, visibility: ShaderStages) -> BindGroupLayoutEntry;
 }
 
-impl<T: Immutable + IntoBytes> Binding for Buffer<T> {
+impl<T: NoUninit> Binding for Buffer<T> {
     fn bind(&self, binding: u32, visibility: ShaderStages) -> BindGroupLayoutEntry {
         use wgpu::BufferBindingType::*;
         let ty = match self {
@@ -81,7 +81,7 @@ impl<'a> Bindings<'a> {
     Doing it this way lets the `BufferGroupDescriptor` accept uniform and storage buffers of different types into
     the same vecs, because they will all yield a `BindGroupLayoutEntry` and `BufferInitDescriptor` regardless. 
     */
-    pub fn bind<T: Immutable + IntoBytes>(&mut self, buffer: &'a Buffer<T>, visibility: ShaderStages) {
+    pub fn bind<T: NoUninit>(&mut self, buffer: &'a Buffer<T>, visibility: ShaderStages) {
         self.layouts.push(buffer.bind(self.layouts.len() as u32, visibility));
         self.buffers.push(buffer.descriptor());
     }

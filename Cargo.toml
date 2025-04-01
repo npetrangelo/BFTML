@@ -11,4 +11,3 @@ wgpu = "24.0.3"
 wgpu_macros = { version = "0.1.0", path = "wgpu-macros" }
 winnow = "0.7.4"
 winit = { version = "0.30.9", features = ["rwh_05"] }
-zerocopy= "0.8.24"
