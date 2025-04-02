@@ -2,7 +2,7 @@ use std::{borrow::Cow, sync::Arc};
 
 use bindings::Bindings;
 use geometry::{Geometry, Vertex};
-use gpu::GPU;
+use gpu::{GeoBuffers, GPU};
 use wgpu::{util::BufferInitDescriptor, BindGroup, PipelineLayout, RenderPipeline, ShaderModule};
 use winit::window::Window;
 
@@ -137,9 +137,9 @@ impl Graphics {
     You can only have one vertex type in a render, so monomorphizing over that makes sense.
     We want to support arbitrary bound buffers, and the Bindings type takes care of that.
     */
-    pub fn render<V: Vertex>(&self, pipeline: &RenderPipeline, groups: Vec<BindGroup>, geometry: &Geometry<V>) -> Result<(), wgpu::SurfaceError> {
-        let geo = self.gpu.geo_buffers(geometry);
-        self.gpu.render(&self.surface, pipeline, &groups, &geo)
+    pub fn render<V: Vertex>(&self, pipeline: &RenderPipeline, groups: Vec<BindGroup>, geometries: &[Geometry<V>]) -> Result<(), wgpu::SurfaceError> {
+        let geos: Vec<GeoBuffers> = geometries.iter().map(|geometry| self.gpu.geo_buffers(geometry)).collect();
+        self.gpu.render(&self.surface, pipeline, &groups, &geos)
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {

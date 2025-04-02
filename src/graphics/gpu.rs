@@ -139,8 +139,10 @@ impl GPU {
     and what to do with it, and finally the data itself between `GeoBuffers` and the `BindGroup` slice,
     the GPU creates a `CommandEncoder` to create a `RenderPass`. The pass is configured with the `RenderPipeline` and `Buffer`s,
     and a draw function is called. The encoder returns a `CommandBuffer` when finished, which is submitted to the `Queue`.
+
+    GeoBuffers are drawn sequentially, first to last.
     */
-    pub fn render(&self, surface: &Surface, pipeline: &RenderPipeline, bind_groups: &[BindGroup], geo: &GeoBuffers) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&self, surface: &Surface, pipeline: &RenderPipeline, bind_groups: &[BindGroup], geos: &[GeoBuffers]) -> Result<(), wgpu::SurfaceError> {
         let output = surface.get_current_texture()?;
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
         let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -165,9 +167,11 @@ impl GPU {
             bind_groups.iter().zip(0..bind_groups.len()).for_each(|(group, index)| {
                 render_pass.set_bind_group(index as u32, group, &[]);
             });
-            render_pass.set_vertex_buffer(0, geo.vertices.slice(..));
-            render_pass.set_index_buffer(geo.indices.slice(..), wgpu::IndexFormat::Uint16); // 1.
-            render_pass.draw_indexed(0..geo.num_indices, 0, 0..1); // 2.
+            for geo in geos.iter() {
+                render_pass.set_vertex_buffer(0, geo.vertices.slice(..));
+                render_pass.set_index_buffer(geo.indices.slice(..), wgpu::IndexFormat::Uint16); // 1.
+                render_pass.draw_indexed(0..geo.num_indices, 0, 0..1); // 2.
+            }
         }
 
         // submit will accept anything that implements IntoIter

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{slice, sync::Arc};
 
 use winit::{application::ApplicationHandler, event::{ElementState, KeyEvent, WindowEvent}, event_loop::ActiveEventLoop, keyboard::{KeyCode, PhysicalKey}, window::Window};
 
@@ -8,7 +8,7 @@ use crate::{elements::rect::{Point, Rect}, graphics::{geometry::Geometry, Graphi
 pub enum App {
     #[default]
     Paused,
-    Running(Arc<Window>, Graphics, Geometry<Point>)
+    Running(Arc<Window>, Graphics, Vec<Geometry<Point>>)
 }
 
 impl ApplicationHandler for App {
@@ -17,11 +17,15 @@ impl ApplicationHandler for App {
             Window::default_attributes().with_title("Learn WGPU")
         ).unwrap());
         let graphics = Graphics::new(window.clone());
-        let rect = Rect {
+        let rect1 = Rect {
             center: (0., 0.),
             size: (0.75, 0.5),
         };
-        *self = Self::Running(window, graphics, rect.into());
+        let rect2 = Rect {
+            center: (0., 0.),
+            size: (0.5, 0.75),
+        };
+        *self = Self::Running(window, graphics, vec![rect1.into(), rect2.into()]);
     }
 
     fn suspended(&mut self, event_loop: &ActiveEventLoop) {
@@ -54,7 +58,7 @@ impl ApplicationHandler for App {
                     App::Running(window, graphics, geometry) => {
                         let material = Material::new("src/shaders/test.wgsl");
                         let (pipeline, groups) = graphics.pipeline::<Point>(&material);
-                        let _ = graphics.render::<Point>(&pipeline, groups, geometry);
+                        let _ = graphics.render::<Point>(&pipeline, groups, &geometry);
                         window.request_redraw();
                     }
                 }
