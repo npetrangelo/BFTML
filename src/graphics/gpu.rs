@@ -48,9 +48,8 @@ impl GPU {
                     required_limits: wgpu::Limits::default(),
                     label: None,
                     memory_hints: wgpu::MemoryHints::Performance,
-                },
-                None, // Trace path
-            ).await.expect("Device and queue should exist");
+                    trace: wgpu::Trace::Off,
+                }).await.expect("Device and queue should exist");
             (adapter, device, queue)
         });
 

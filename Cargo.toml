@@ -5,9 +5,9 @@ edition = "2021"
 
 [dependencies]
 bytemuck = { version = "1.22.0", features = [ "derive" ] }
-indexmap = "2.8.0"
+indexmap = "2.9.0"
 pollster = "0.4.0"
-wgpu = "24.0.3"
+wgpu = "25.0.0"
 wgpu_macros = { version = "0.1.0", path = "wgpu-macros" }
-winnow = "0.7.4"
+winnow = "0.7.6"
 winit = { version = "0.30.9", features = ["rwh_05"] }
