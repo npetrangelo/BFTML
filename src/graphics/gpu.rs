@@ -18,7 +18,7 @@ losing any functionality.
 */
 pub struct GPU {
     pub device: wgpu::Device,
-    queue: wgpu::Queue,
+    pub queue: wgpu::Queue,
 }
 
 impl GPU {

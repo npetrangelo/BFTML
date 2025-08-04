@@ -3,7 +3,7 @@ use std::{borrow::Cow, sync::Arc};
 use bindings::Bindings;
 use geometry::{Geometry, Vertex};
 use gpu::{GeoBuffers, GPU};
-use wgpu::{util::BufferInitDescriptor, BindGroup, PipelineLayout, RenderPipeline, ShaderModule};
+use wgpu::{util::BufferInitDescriptor, BindGroup, RenderPipeline};
 use winit::window::Window;
 
 pub mod bindings;
@@ -17,16 +17,13 @@ pub trait Bufferize: Sized {
 const BLACK: wgpu::Color = wgpu::Color { r: 0., g: 0., b: 0., a: 1. };
 
 pub struct Graphics {
-    surface: wgpu::Surface<'static>,
     gpu: GPU,
+    surface: wgpu::Surface<'static>,
     config: wgpu::SurfaceConfiguration,
-    size: winit::dpi::PhysicalSize<u32>,
 }
 
 impl Graphics {
     pub fn new(window: Arc<Window>) -> Self {
-        let size = window.inner_size();
-
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             ..Default::default()
@@ -36,7 +33,8 @@ impl Graphics {
         //
         // The surface needs to live as long as the window that created it.
         // State owns the window, so this should be safe.
-        let surface= instance.create_surface(window).unwrap();
+        let size = window.inner_size(); // Grab size before window is moved
+        let surface = instance.create_surface(window).unwrap();
 
         let (gpu, surface_caps) = GPU::new(&instance, &surface);
 
@@ -61,10 +59,9 @@ impl Graphics {
         surface.configure(&gpu.device, &config);
 
         Self {
-            surface,
             gpu,
+            surface,
             config,
-            size,
         }
     }
 
@@ -144,7 +141,6 @@ impl Graphics {
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
-            self.size = new_size;
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.gpu.device, &self.config);
