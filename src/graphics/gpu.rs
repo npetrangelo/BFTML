@@ -152,6 +152,7 @@ impl GPU {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
+                    // depth_slice: None, uncomment when wgpu 26 compiles
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(BLACK),

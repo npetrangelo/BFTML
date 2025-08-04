@@ -4,10 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bytemuck = { version = "1.22.0", features = [ "derive" ] }
-indexmap = "2.9.0"
+bytemuck = { version = "1.23.1", features = [ "derive" ] }
+glyphon = "0.9.0"
+indexmap = "2.10.0"
 pollster = "0.4.0"
-wgpu = "25.0.0"
+wgpu = "25.0.2" # Latest release will not compile yet
 wgpu_macros = { version = "0.1.0", path = "wgpu-macros" }
-winnow = "0.7.6"
-winit = { version = "0.30.9", features = ["rwh_05"] }
+winnow = "0.7.12"
+winit = { version = "0.30.12", features = ["rwh_05"] }
