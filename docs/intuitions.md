@@ -37,7 +37,7 @@ generate bindings under the hood to manipulate the DOM with JS.
 
 ### Rectifications
 The solution seems rather obvious: Give those people what they want, and what they want is a web assembly runtime that can directly manipulate the markup.
-And so, that is they shall have.
+And so, that is what they shall have.
 
 But we will go further. Traditional JS can manipulate the entire DOM no matter where you put it.
 In BFTML, component elements will only be able to manipulate their subtree, which may contain markup to render first before the web assembly modules are loaded.
