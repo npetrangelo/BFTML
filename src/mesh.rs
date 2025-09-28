@@ -1,9 +1,10 @@
 use wgpu_macros::*;
+use zerocopy::{Immutable, IntoBytes};
 
 use crate::graphics::geometry::{Geometry, Vertex};
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable, VertexLayout)]
+#[derive(Copy, Clone, Debug, IntoBytes, Immutable, VertexLayout)]
 pub struct Point {
     pub position: [f32; 3],
     pub color: [f32; 3],

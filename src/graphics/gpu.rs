@@ -72,8 +72,8 @@ impl GPU {
     }
 
     pub fn geo_buffers<V: Vertex>(&self, geometry: &Geometry<V>) -> GeoBuffers {
-        let vertices = self.device.create_buffer_init(&geometry.vertices.descriptor());
-        let indices = self.device.create_buffer_init(&geometry.indices.descriptor());
+        let vertices = self.device.create_buffer_init(&geometry.vertices.as_slice().descriptor());
+        let indices = self.device.create_buffer_init(&geometry.indices.as_slice().descriptor());
 
         GeoBuffers {
             vertices,

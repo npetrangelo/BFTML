@@ -10,8 +10,8 @@ pub mod bindings;
 pub mod geometry;
 pub mod gpu;
 
-pub trait Bufferize: Sized {
-    fn descriptor(&self) -> BufferInitDescriptor;
+pub trait Bufferize<'b>: Sized {
+    fn descriptor(&self) -> BufferInitDescriptor<'b>;
 }
 
 const BLACK: wgpu::Color = wgpu::Color { r: 0., g: 0., b: 0., a: 1. };

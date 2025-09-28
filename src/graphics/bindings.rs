@@ -1,32 +1,28 @@
-use bytemuck::{bytes_of, NoUninit};
 use wgpu::{util::BufferInitDescriptor, BindGroupLayoutEntry, ShaderStages};
+use zerocopy::{Immutable, IntoBytes};
 
 use super::Bufferize;
 
 #[derive(Clone, Copy)]
-pub enum Buffer<T: NoUninit> {
-    UNIFORM(T),
-    STORAGE(T)
+pub struct Buffer<'b, T: IntoBytes + Immutable + 'b> {
+    pub data: &'b T,
+    pub usage: BufferUsage,
 }
 
-impl<T: NoUninit> Bufferize for Buffer<T> {
-    fn descriptor(&self) -> BufferInitDescriptor {
-        match self {
-            Buffer::UNIFORM(b) => {
-                BufferInitDescriptor {
-                    label: Some("Uniform buffer"),
-                    contents: bytes_of(b),
-                    usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-                }
-            },
-            Buffer::STORAGE(b) => {
-                BufferInitDescriptor {
-                    label: Some("Storage buffer"),
-                    contents: bytes_of(b),
-                    usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-                }
-            },
-        }
+#[derive(Clone, Copy)]
+pub enum BufferUsage {
+    UNIFORM,
+    STORAGE
+}
+
+impl<'b, T: IntoBytes + Immutable + 'b> Bufferize<'b> for Buffer<'b, T> {
+    fn descriptor(&self) -> BufferInitDescriptor<'b> {
+        use wgpu::BufferUsages;
+        let (label, usage) = match self.usage {
+            BufferUsage::UNIFORM => (Some("Uniform buffer"), BufferUsages::UNIFORM),
+            BufferUsage::STORAGE => (Some("Storage buffer"), BufferUsages::STORAGE),
+        };
+        BufferInitDescriptor { label, contents: self.data.as_bytes(), usage: usage | BufferUsages::COPY_DST }
     }
 }
 
@@ -34,12 +30,12 @@ pub trait Binding {
     fn bind(&self, binding: u32, visibility: ShaderStages) -> BindGroupLayoutEntry;
 }
 
-impl<T: NoUninit> Binding for Buffer<T> {
+impl<'b, T: IntoBytes + Immutable + 'b> Binding for Buffer<'b, T> {
     fn bind(&self, binding: u32, visibility: ShaderStages) -> BindGroupLayoutEntry {
         use wgpu::BufferBindingType::*;
-        let ty = match self {
-            Buffer::UNIFORM(_) => Uniform,
-            Buffer::STORAGE(_) => Storage { read_only: false },
+        let ty = match self.usage {
+            BufferUsage::UNIFORM => Uniform,
+            BufferUsage::STORAGE => Storage { read_only: false },
         };
         BindGroupLayoutEntry {
             binding,
@@ -64,7 +60,7 @@ pub struct Bindings<'a> {
     pub buffers: Vec<BufferInitDescriptor<'a>>,
 }
 
-impl<'a> Bindings<'a> {
+impl<'b> Bindings<'b> {
     pub fn new() -> Self {
         Self {
             layouts: Vec::new(),
@@ -81,7 +77,7 @@ impl<'a> Bindings<'a> {
     Doing it this way lets the `BufferGroupDescriptor` accept uniform and storage buffers of different types into
     the same vecs, because they will all yield a `BindGroupLayoutEntry` and `BufferInitDescriptor` regardless. 
     */
-    pub fn bind<T: NoUninit>(&mut self, buffer: &'a Buffer<T>, visibility: ShaderStages) {
+    pub fn bind<T: IntoBytes + Immutable + 'b>(&mut self, buffer: Buffer<'b, T>, visibility: ShaderStages) {
         self.layouts.push(buffer.bind(self.layouts.len() as u32, visibility));
         self.buffers.push(buffer.descriptor());
     }
