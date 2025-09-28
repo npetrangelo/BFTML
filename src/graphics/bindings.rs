@@ -3,8 +3,17 @@ use zerocopy::{Immutable, IntoBytes};
 
 use super::Bufferize;
 
+/**
+This only exists briefly for `Bindings::bind()` as a way of generating
+the `BufferInitDescriptor` and the `BindGroupLayoutEntry`.
+Since data is an immutable borrow, the owner cannot be mutated while `Buffer` exists.
+`Buffer::descriptor()` ties this borrow lifetime to the contents slice in `BufferInitDescriptor`,
+so the owner also cannot be mutated while the binding exists.
+
+Previously `Buffer` was an enum, but the data doesn't care which usage variant is in play, so I pulled it out.
+*/
 #[derive(Clone, Copy)]
-pub struct Buffer<'b, T: IntoBytes + Immutable + 'b> {
+pub struct Buffer<'b, T: IntoBytes + Immutable> {
     pub data: &'b T,
     pub usage: BufferUsage,
 }
@@ -15,7 +24,11 @@ pub enum BufferUsage {
     STORAGE
 }
 
-impl<'b, T: IntoBytes + Immutable + 'b> Bufferize<'b> for Buffer<'b, T> {
+impl<'b, T: IntoBytes + Immutable> Bufferize<'b> for Buffer<'b, T> {
+    /**
+    This impl ties the lifetime of the `Buffer` data reference to the lifetime of the `BufferInitDescriptor`.
+    The data is borrowed immutably by `BufferInitDescriptor`, so it cannot be mutated until the binding is dropped.
+    */
     fn descriptor(&self) -> BufferInitDescriptor<'b> {
         use wgpu::BufferUsages;
         let (label, usage) = match self.usage {
@@ -30,7 +43,7 @@ pub trait Binding {
     fn bind(&self, binding: u32, visibility: ShaderStages) -> BindGroupLayoutEntry;
 }
 
-impl<'b, T: IntoBytes + Immutable + 'b> Binding for Buffer<'b, T> {
+impl<'b, T: IntoBytes + Immutable> Binding for Buffer<'b, T> {
     fn bind(&self, binding: u32, visibility: ShaderStages) -> BindGroupLayoutEntry {
         use wgpu::BufferBindingType::*;
         let ty = match self.usage {
@@ -75,7 +88,10 @@ impl<'b> Bindings<'b> {
     and `BufferInitDescriptor` which get pushed to their respective vecs.
 
     Doing it this way lets the `BufferGroupDescriptor` accept uniform and storage buffers of different types into
-    the same vecs, because they will all yield a `BindGroupLayoutEntry` and `BufferInitDescriptor` regardless. 
+    the same vecs, because they will all yield a `BindGroupLayoutEntry` and `BufferInitDescriptor` regardless.
+
+    After this method returns, `Buffer` is dropped, but the data it referenced remains referenced by the `BufferInitDescriptor`
+    until the `Bindings` is dropped.
     */
     pub fn bind<T: IntoBytes + Immutable + 'b>(&mut self, buffer: Buffer<'b, T>, visibility: ShaderStages) {
         self.layouts.push(buffer.bind(self.layouts.len() as u32, visibility));
