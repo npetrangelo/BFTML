@@ -7,6 +7,7 @@ mod elements;
 mod graphics;
 mod mesh;
 mod parser;
+mod procedural;
 
 fn main() {
     let event_loop = EventLoop::new().unwrap();

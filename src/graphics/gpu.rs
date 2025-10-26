@@ -95,7 +95,7 @@ impl GPU {
             bind_group_descriptors.iter().map(|descriptor|
                 self.create_bind_group(descriptor, None)).unzip();
         
-        let bind_group_layouts: Vec<&BindGroupLayout> = layouts.iter().map(|l| &*l).collect();
+        let bind_group_layouts: Vec<&BindGroupLayout> = layouts.iter().collect();
         let pipeline_layout = self.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: label.map(|s| format!("{s}_pipeline_layout")).as_deref(),
             bind_group_layouts: &bind_group_layouts,

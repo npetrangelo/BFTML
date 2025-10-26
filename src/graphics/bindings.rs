@@ -93,7 +93,7 @@ impl<'b> Bindings<'b> {
     After this method returns, `Buffer` is dropped, but the data it referenced remains referenced by the `BufferInitDescriptor`
     until the `Bindings` is dropped.
     */
-    pub fn bind<T: IntoBytes + Immutable + 'b>(&mut self, buffer: Buffer<'b, T>, visibility: ShaderStages) {
+    pub fn bind<T: IntoBytes + Immutable>(&mut self, buffer: Buffer<'b, T>, visibility: ShaderStages) {
         self.layouts.push(buffer.bind(self.layouts.len() as u32, visibility));
         self.buffers.push(buffer.descriptor());
     }

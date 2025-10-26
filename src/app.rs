@@ -1,14 +1,14 @@
-use std::{slice, sync::Arc};
+use std::sync::Arc;
 
 use winit::{application::ApplicationHandler, event::{ElementState, KeyEvent, WindowEvent}, event_loop::ActiveEventLoop, keyboard::{KeyCode, PhysicalKey}, window::Window};
 
-use crate::{elements::rect::{Point, Rect}, graphics::{geometry::Geometry, Graphics, Material}};
+use crate::{elements::rect::{Point, Rect}, graphics::{geometry::Geometry, Graphics, Material}, procedural::{circle::Circle, IntoRenderer}};
 
 #[derive(Default)]
 pub enum App {
     #[default]
     Paused,
-    Running(Arc<Window>, Graphics, Vec<Geometry<Point>>)
+    Running(Arc<Window>, Graphics, Vec<Circle>)
 }
 
 impl ApplicationHandler for App {
@@ -17,15 +17,9 @@ impl ApplicationHandler for App {
             Window::default_attributes().with_title("Learn WGPU")
         ).unwrap());
         let graphics = Graphics::new(window.clone());
-        let rect1 = Rect {
-            center: (0., 0.),
-            size: (0.75, 0.5),
-        };
-        let rect2 = Rect {
-            center: (0., 0.),
-            size: (0.5, 0.75),
-        };
-        *self = Self::Running(window, graphics, vec![rect1.into(), rect2.into()]);
+        *self = Self::Running(window, graphics, vec![
+            Circle { center:[250.0,250.0], radius: 200., color: [1.0, 0.0, 0.0], thickness: 10.0 }
+        ]);
     }
 
     fn suspended(&mut self, event_loop: &ActiveEventLoop) {
@@ -55,10 +49,8 @@ impl ApplicationHandler for App {
             WindowEvent::RedrawRequested => {
                 match self {
                     App::Paused => todo!(),
-                    App::Running(window, graphics, geometry) => {
-                        let material = Material::new("src/shaders/test.wgsl");
-                        let (pipeline, groups) = graphics.pipeline::<Point>(&material);
-                        let _ = graphics.render::<Point>(&pipeline, groups, &geometry);
+                    App::Running(window, graphics, circles) => {
+                        graphics.render2(&[graphics.renderer(circles.as_slice())]);
                         window.request_redraw();
                     }
                 }

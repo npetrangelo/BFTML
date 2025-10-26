@@ -6,15 +6,18 @@ use gpu::{GeoBuffers, GPU};
 use wgpu::{util::BufferInitDescriptor, BindGroup, RenderPipeline};
 use winit::window::Window;
 
+use crate::procedural::{IntoRenderer, Renderer, Uniforms};
+
 pub mod bindings;
 pub mod geometry;
 pub mod gpu;
+pub mod middleware;
+
+const BLACK: wgpu::Color = wgpu::Color { r: 0., g: 0., b: 0., a: 1. };
 
 pub trait Bufferize<'b>: Sized {
     fn descriptor(&self) -> BufferInitDescriptor<'b>;
 }
-
-const BLACK: wgpu::Color = wgpu::Color { r: 0., g: 0., b: 0., a: 1. };
 
 pub struct Graphics {
     gpu: GPU,
@@ -139,6 +142,44 @@ impl Graphics {
         self.gpu.render(&self.surface, pipeline, &groups, &geos)
     }
 
+    pub fn renderer<I: Vertex, U: Uniforms, T: IntoRenderer<I, U>>(&self, t: T) -> Renderer {
+        t.renderer(&self.gpu.device, &self.config.format)
+    }
+
+    pub fn render2(&self, renderers: &[Renderer]) -> Result<(), wgpu::SurfaceError> {
+        let output = self.surface.get_current_texture()?;
+        let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let mut encoder = self.gpu.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Render Encoder"),
+        });
+        {
+            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    // depth_slice: None, uncomment when wgpu 26 compiles
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(BLACK),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                occlusion_query_set: None,
+                timestamp_writes: None,
+            });
+            for renderer in renderers {
+                renderer.render(&mut pass);
+            }
+        }
+
+        // submit will accept anything that implements IntoIter
+        self.gpu.queue.submit(std::iter::once(encoder.finish()));
+        output.present();
+
+        Ok(())
+    }
+
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
             self.config.width = new_size.width;
@@ -157,7 +198,7 @@ pub struct Material<'a> {
 }
 
 impl<'a> Material<'a> {
-    pub fn new(shader: &'a str) -> Self {
+    pub fn new(shader: &str) -> Self {
         Self {
             shader: std::fs::read_to_string(shader).expect("reading shader failed"),
             bindings: Vec::new(),
@@ -167,4 +208,9 @@ impl<'a> Material<'a> {
     pub fn attach(&mut self, group: Bindings<'a>) {
         self.bindings.push(group);
     }
+}
+
+pub struct Mesh<'a, V: Vertex> {
+    pub material: Material<'a>,
+    pub geometry: Geometry<V>
 }
