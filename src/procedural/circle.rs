@@ -2,7 +2,7 @@ use wgpu::include_wgsl;
 use wgpu_macros::VertexLayout;
 use zerocopy::{Immutable, IntoBytes};
 
-use crate::{graphics::geometry::Vertex, procedural::IntoRenderer};
+use crate::{graphics::Vertex, procedural::IntoRenderer};
 
 /**
 A point with a distance offset

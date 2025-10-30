@@ -5,7 +5,6 @@ use winit::event_loop::{ControlFlow, EventLoop};
 mod app;
 mod elements;
 mod graphics;
-mod mesh;
 mod parser;
 mod procedural;
 

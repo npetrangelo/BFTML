@@ -1,8 +1,6 @@
 use wgpu::{util::BufferInitDescriptor, BindGroupLayoutEntry, ShaderStages};
 use zerocopy::{Immutable, IntoBytes};
 
-use super::Bufferize;
-
 /**
 This only exists briefly for `Bindings::bind()` as a way of generating
 the `BufferInitDescriptor` and the `BindGroupLayoutEntry`.
@@ -22,6 +20,10 @@ pub struct Buffer<'b, T: IntoBytes + Immutable> {
 pub enum BufferUsage {
     UNIFORM,
     STORAGE
+}
+
+pub trait Bufferize<'b> {
+    fn descriptor(&self) -> BufferInitDescriptor<'b>;
 }
 
 impl<'b, T: IntoBytes + Immutable> Bufferize<'b> for Buffer<'b, T> {

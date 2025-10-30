@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use winit::{application::ApplicationHandler, event::{ElementState, KeyEvent, WindowEvent}, event_loop::ActiveEventLoop, keyboard::{KeyCode, PhysicalKey}, window::Window};
 
-use crate::{elements::rect::{Point, Rect}, graphics::{geometry::Geometry, Graphics, Material}, procedural::{circle::Circle, IntoRenderer}};
+use crate::{graphics::Graphics, procedural::circle::Circle};
 
 #[derive(Default)]
 pub enum App {
@@ -50,7 +50,7 @@ impl ApplicationHandler for App {
                 match self {
                     App::Paused => todo!(),
                     App::Running(window, graphics, circles) => {
-                        graphics.render2(&[graphics.renderer(circles.as_slice())]);
+                        graphics.render(&[graphics.renderer(circles.as_slice())]);
                         window.request_redraw();
                     }
                 }
