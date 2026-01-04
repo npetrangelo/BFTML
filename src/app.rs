@@ -18,7 +18,7 @@ impl ApplicationHandler for App {
         ).unwrap());
         let graphics = Graphics::new(window.clone());
         *self = Self::Running(window, graphics, vec![
-            Circle { center:[250.0,250.0], radius: 200., color: [1.0, 0.0, 0.0], thickness: 10.0 }
+            Circle { center:[250.0,250.0], radius: 225., thickness: 25., color: [1.0, 0.0, 0.0] }
         ]);
     }
 

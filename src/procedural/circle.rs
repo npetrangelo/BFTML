@@ -13,8 +13,8 @@ A point with a distance offset
 pub struct Circle {
     pub center: [f32; 2],
     pub radius: f32,
+    pub thickness: f32,
     pub color: [f32; 3],
-    pub thickness: f32
 }
 
 impl Vertex for Circle {}
