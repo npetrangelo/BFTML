@@ -4,10 +4,12 @@ struct VertexInput {
 
 // Thickness grows border outwards
 struct InstanceInput {
-    @location(1) center: vec2<f32>,
-    @location(2) size: vec2<f32>,
-    @location(3) thickness: f32,
-    @location(4) color: vec3<f32>,
+    @location(1) left: f32,
+    @location(2) right: f32,
+    @location(3) top: f32,
+    @location(4) bottom: f32,
+    @location(5) thickness: f32,
+    @location(6) color: vec3<f32>,
 };
 
 struct VertexOutput {
@@ -39,8 +41,8 @@ fn vs_main(
 ) -> VertexOutput {
     var out: VertexOutput;
     out.clip_position = vec4<f32>(model.position, 1.0);
-    out.center = instance.center;
-    out.size = instance.size;
+    out.center = (vec2(instance.left, instance.top) + vec2(instance.right, instance.bottom))/2.0;
+    out.size = vec2(instance.right - instance.left, instance.bottom - instance.top);
     out.thickness = instance.thickness;
     out.color = instance.color;
     return out;

@@ -9,8 +9,10 @@ use crate::{graphics::Vertex, procedural::IntoRenderer};
 #[layout(Instance)]
 #[location = 1]
 pub struct Rect {
-    pub center: [f32; 2],
-    pub size: [f32; 2],
+    pub left: f32,
+    pub right: f32,
+    pub top: f32,
+    pub bottom: f32,
     pub thickness: f32,
     pub color: [f32; 3],
 }
