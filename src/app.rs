@@ -2,13 +2,13 @@ use std::sync::Arc;
 
 use winit::{application::ApplicationHandler, event::{ElementState, KeyEvent, WindowEvent}, event_loop::ActiveEventLoop, keyboard::{KeyCode, PhysicalKey}, window::Window};
 
-use crate::{graphics::Graphics, procedural::circle::Circle};
+use crate::{graphics::Graphics, procedural::{circle::Circle, rect::Rect}};
 
 #[derive(Default)]
 pub enum App {
     #[default]
     Paused,
-    Running(Arc<Window>, Graphics, Vec<Circle>)
+    Running(Arc<Window>, Graphics, Vec<Circle>, Vec<Rect>)
 }
 
 impl ApplicationHandler for App {
@@ -19,6 +19,9 @@ impl ApplicationHandler for App {
         let graphics = Graphics::new(window.clone());
         *self = Self::Running(window, graphics, vec![
             Circle { center:[250.0,250.0], radius: 225., thickness: 25., color: [1.0, 0.0, 0.0] }
+        ],
+        vec![
+            Rect { center: [300.0, 300.0], size: [20.0, 30.0], thickness: 10., color: [0.0, 1.0, 0.0]}
         ]);
     }
 
@@ -49,8 +52,8 @@ impl ApplicationHandler for App {
             WindowEvent::RedrawRequested => {
                 match self {
                     App::Paused => todo!(),
-                    App::Running(window, graphics, circles) => {
-                        graphics.render(&[graphics.renderer(circles.as_slice())]);
+                    App::Running(window, graphics, circles, rects) => {
+                        graphics.render(&[graphics.renderer(circles.as_slice()), graphics.renderer(rects.as_slice())]);
                         window.request_redraw();
                     }
                 }
@@ -58,7 +61,7 @@ impl ApplicationHandler for App {
             WindowEvent::Resized(physical_size) => {
                 match self {
                     App::Paused => todo!(),
-                    App::Running(_, graphics, _) => graphics.resize(physical_size),
+                    App::Running(_, graphics, _, _) => graphics.resize(physical_size),
                 }
             },
             _ => (),

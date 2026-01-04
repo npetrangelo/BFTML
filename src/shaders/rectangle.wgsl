@@ -5,7 +5,7 @@ struct VertexInput {
 // Thickness grows border outwards
 struct InstanceInput {
     @location(1) center: vec2<f32>,
-    @location(2) radius: f32,
+    @location(2) size: vec2<f32>,
     @location(3) thickness: f32,
     @location(4) color: vec3<f32>,
 };
@@ -13,13 +13,23 @@ struct InstanceInput {
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) center: vec2<f32>,
-    @location(1) radius: f32,
+    @location(1) size: vec2<f32>,
     @location(2) thickness: f32,
     @location(3) color: vec3<f32>,
 };
 
-fn sdCircle(p: vec2<f32>, r: f32) -> f32 {
-    return length(p) - r;
+// float sdRect(vec2 p, vec2 sz) {  
+//   vec2 d = abs(p) - sz;
+//   float outside = length(max(d, 0.));
+//   float inside = min(max(d.x, d.y), 0.);
+//   return outside + inside;
+// }
+
+fn sdBox(p: vec2<f32>, b: vec2<f32>) -> f32 {
+    var d = abs(p) - b;
+    var outside = length(max(d, vec2(0.0)));
+    var inside = min(max(d.x, d.y), 0.0);
+    return outside + inside;
 }
 
 @vertex
@@ -30,7 +40,7 @@ fn vs_main(
     var out: VertexOutput;
     out.clip_position = vec4<f32>(model.position, 1.0);
     out.center = instance.center;
-    out.radius = instance.radius;
+    out.size = instance.size;
     out.thickness = instance.thickness;
     out.color = instance.color;
     return out;
@@ -40,15 +50,8 @@ fn vs_main(
 
 @fragment
 fn fs_border(in: VertexOutput) -> @location(0) vec4<f32> {
-    var sdf = sdCircle(in.clip_position.xy - in.center, in.radius);
+    var sdf = sdBox(in.clip_position.xy - in.center, in.size);
     var mask = abs(sdf - in.thickness/2.0) - in.thickness/2.0;
     var pixel = -mask * in.color;
-    return vec4<f32>(pixel, 1.0);
-}
-
-@fragment
-fn fs_fill(in: VertexOutput) -> @location(0) vec4<f32> {
-    var d = sdCircle(in.clip_position.xy - in.center, in.radius);
-    var pixel: vec3<f32> = -d * in.color;
-    return vec4<f32>(pixel, d);
+    return vec4<f32>(pixel, -mask);
 }
