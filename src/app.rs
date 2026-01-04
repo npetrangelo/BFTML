@@ -21,7 +21,7 @@ impl ApplicationHandler for App {
             Circle { center:[250.0,250.0], radius: 225., thickness: 25., color: [1.0, 0.0, 0.0] }
         ],
         vec![
-            Rect { center: [300.0, 300.0], size: [20.0, 30.0], thickness: 10., color: [0.0, 1.0, 0.0]}
+            Rect { left: 250.0, right: 350.0, top: 300.0, bottom: 350.0, thickness: 10., color: [0.0, 1.0, 0.0]}
         ]);
     }
 
