@@ -52,6 +52,5 @@ fn vs_main(
 fn fs_border(in: VertexOutput) -> @location(0) vec4<f32> {
     var sdf = sdBox(in.clip_position.xy - in.center, in.size);
     var mask = abs(sdf - in.thickness/2.0) - in.thickness/2.0;
-    var pixel = -mask * in.color;
-    return vec4<f32>(pixel, -mask);
+    return vec4<f32>(in.color, -mask);
 }

@@ -42,13 +42,11 @@ fn vs_main(
 fn fs_border(in: VertexOutput) -> @location(0) vec4<f32> {
     var sdf = sdCircle(in.clip_position.xy - in.center, in.radius);
     var mask = abs(sdf - in.thickness/2.0) - in.thickness/2.0;
-    var pixel = -mask * in.color;
-    return vec4<f32>(pixel, 1.0);
+    return vec4<f32>(in.color, -mask);
 }
 
 @fragment
 fn fs_fill(in: VertexOutput) -> @location(0) vec4<f32> {
     var d = sdCircle(in.clip_position.xy - in.center, in.radius);
-    var pixel: vec3<f32> = -d * in.color;
-    return vec4<f32>(pixel, d);
+    return vec4<f32>(in.color, d);
 }
