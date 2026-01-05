@@ -20,13 +20,6 @@ struct VertexOutput {
     @location(3) color: vec3<f32>,
 };
 
-// float sdRect(vec2 p, vec2 sz) {  
-//   vec2 d = abs(p) - sz;
-//   float outside = length(max(d, 0.));
-//   float inside = min(max(d.x, d.y), 0.);
-//   return outside + inside;
-// }
-
 fn sdBox(p: vec2<f32>, b: vec2<f32>) -> f32 {
     var d = abs(p) - b;
     var outside = length(max(d, vec2(0.0)));

@@ -20,7 +20,7 @@ pub struct Rect {
 impl Vertex for Rect {}
 
 impl IntoRenderer<Rect, ()> for &[Rect] {
-    const SHADER: wgpu::ShaderModuleDescriptor<'static> = include_wgsl!("../shaders/rectangle.wgsl");
+    const SHADER: wgpu::ShaderModuleDescriptor<'static> = include_wgsl!("../shaders/rect.wgsl");
 
     fn instances(&self) -> &[Rect] {
         self
