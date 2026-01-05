@@ -2,13 +2,13 @@ use std::sync::Arc;
 
 use winit::{application::ApplicationHandler, event::{ElementState, KeyEvent, WindowEvent}, event_loop::ActiveEventLoop, keyboard::{KeyCode, PhysicalKey}, window::Window};
 
-use crate::{graphics::Graphics, procedural::{circle::Circle, rect::Rect}};
+use crate::{graphics::Graphics, procedural::{circle::Circle, rect::Rect, rrect::RRect}};
 
 #[derive(Default)]
 pub enum App {
     #[default]
     Paused,
-    Running(Arc<Window>, Graphics, Vec<Circle>, Vec<Rect>)
+    Running(Arc<Window>, Graphics, Vec<Circle>, Vec<RRect>)
 }
 
 impl ApplicationHandler for App {
@@ -21,7 +21,7 @@ impl ApplicationHandler for App {
             Circle { center:[250.0,250.0], radius: 225., thickness: 25., color: [1.0, 0.0, 0.0] }
         ],
         vec![
-            Rect { left: 250.0, right: 350.0, top: 300.0, bottom: 350.0, thickness: 10., color: [0.0, 1.0, 0.0]}
+            RRect { left: 250.0, right: 350.0, top: 300.0, bottom: 350.0, thickness: 10., radius: 20., color: [0.0, 1.0, 0.0]}
         ]);
     }
 
