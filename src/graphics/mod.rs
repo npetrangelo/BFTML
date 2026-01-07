@@ -73,7 +73,21 @@ impl Graphics {
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };
+
         surface.configure(&device, &config);
+
+        // Check here when using updated wgpu
+        // https://github.com/gfx-rs/wgpu/issues/3756
+        #[allow(invalid_reference_casting)]
+        unsafe {
+            surface.as_hal::<wgpu::hal::metal::Api, _, ()>(|surface| {
+                if let Some(surface_ref) = surface {
+                    // AHH! Converting '&' to '&mut'
+                    let surface_mut = &mut *(surface_ref as *const wgpu::hal::metal::Surface as *mut wgpu::hal::metal::Surface);
+                    surface_mut.present_with_transaction = true;
+                }
+            });
+        }
 
         Self {
             device,

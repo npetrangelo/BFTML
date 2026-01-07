@@ -54,7 +54,6 @@ impl ApplicationHandler for App {
                     App::Paused => todo!(),
                     App::Running(window, graphics, circles, rects) => {
                         graphics.render(&[graphics.renderer(circles.as_slice()), graphics.renderer(rects.as_slice())]);
-                        window.request_redraw();
                     }
                 }
             },
