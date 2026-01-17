@@ -114,8 +114,8 @@ pub trait IntoRenderer<I: Vertex, U: Uniforms> {
                     mask: !0,
                     alpha_to_coverage_enabled: false,
                 },
-                multiview: None,
                 cache: None,
+                multiview_mask: None,
             }),
             vertices: device.create_buffer_init(&BufferInitDescriptor {
                 label: Some("circle vertices"),

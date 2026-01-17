@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use wgpu::ExperimentalFeatures;
 use wgpu_macros::VertexLayout;
 use winit::window::Window;
 use zerocopy::{Immutable, IntoBytes};
@@ -49,6 +50,7 @@ impl Graphics {
                     label: None,
                     memory_hints: wgpu::MemoryHints::Performance,
                     trace: wgpu::Trace::Off,
+                    experimental_features: ExperimentalFeatures::disabled(),
                 }).await.expect("Device and queue should exist");
             (adapter, device, queue)
         });
@@ -78,15 +80,11 @@ impl Graphics {
 
         // Check here when using updated wgpu
         // https://github.com/gfx-rs/wgpu/issues/3756
-        #[allow(invalid_reference_casting)]
         unsafe {
-            surface.as_hal::<wgpu::hal::metal::Api, _, ()>(|surface| {
-                if let Some(surface_ref) = surface {
-                    // AHH! Converting '&' to '&mut'
-                    let surface_mut = &mut *(surface_ref as *const wgpu::hal::metal::Surface as *mut wgpu::hal::metal::Surface);
-                    surface_mut.present_with_transaction = true;
-                }
-            });
+            if let Some(hal_surface) = surface.as_hal::<wgpu::hal::api::Metal>() {
+                let guard = hal_surface.render_layer().lock();
+                guard.set_presents_with_transaction(true);
+            }
         }
 
         Self {
@@ -118,10 +116,12 @@ impl Graphics {
                         load: wgpu::LoadOp::Clear(BLACK),
                         store: wgpu::StoreOp::Store,
                     },
+                    depth_slice: None,
                 })],
                 depth_stencil_attachment: None,
                 occlusion_query_set: None,
                 timestamp_writes: None,
+                multiview_mask: None,
             });
             for renderer in renderers {
                 renderer.render(&mut pass);
