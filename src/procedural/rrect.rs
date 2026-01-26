@@ -4,7 +4,7 @@ use zerocopy::{Immutable, IntoBytes};
 
 use crate::{graphics::Vertex, procedural::IntoRenderer};
 
-#[derive(IntoBytes, Immutable, VertexLayout)]
+#[derive(Clone, IntoBytes, Immutable, VertexLayout)]
 #[layout(Instance)]
 #[location = 1]
 pub struct RRect {

@@ -4,9 +4,9 @@ use wgpu::{util::{BufferInitDescriptor, DeviceExt}, BindGroup, BufferUsages, Dev
 use wgpu_macros::VertexLayout;
 use zerocopy::{Immutable, IntoBytes};
 
-use crate::graphics::Vertex;
+use crate::graphics::{Graphics, Vertex};
 
-// pub mod frame;
+pub mod frame;
 
 // pub mod point;
 // pub mod line;
@@ -131,6 +131,10 @@ pub trait IntoRenderer<I: Vertex, U: Uniforms> {
             bindgroups: uniforms.bindgroups(device),
         }
     }
+}
+
+pub trait IntoRenderers {
+    fn renderers(&self, graphics: &Graphics) -> Vec<Renderer>;
 }
 
 // #[repr(C)]

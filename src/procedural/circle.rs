@@ -7,7 +7,7 @@ use crate::{graphics::Vertex, procedural::IntoRenderer};
 /**
 A point with a distance offset
 */
-#[derive(IntoBytes, Immutable, VertexLayout)]
+#[derive(Clone, IntoBytes, Immutable, VertexLayout)]
 #[layout(Instance)]
 #[location = 1]
 pub struct Circle {
