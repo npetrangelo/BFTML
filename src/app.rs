@@ -2,13 +2,13 @@ use std::sync::Arc;
 
 use winit::{application::ApplicationHandler, event::{ElementState, KeyEvent, WindowEvent}, event_loop::ActiveEventLoop, keyboard::{KeyCode, PhysicalKey}, window::Window};
 
-use crate::{graphics::Graphics, procedural::{IntoRenderers, circle::Circle, frame::Frame, rrect::RRect}};
+use crate::{graphics::Graphics, procedural::{IntoRenderers, circle::Circle, canvas::Canvas, rrect::RRect}};
 
 #[derive(Default)]
 pub enum App {
     #[default]
     Paused,
-    Running(Arc<Window>, Graphics, Frame)
+    Running(Arc<Window>, Graphics, Canvas)
 }
 
 impl ApplicationHandler for App {
@@ -21,10 +21,13 @@ impl ApplicationHandler for App {
             Window::default_attributes().with_title("Learn WGPU")
         ).unwrap());
         let graphics = Graphics::new(window.clone());
-        let mut frame = Frame::new();
-        frame.circles(&[Circle { center:[250.0,250.0], radius: 225., thickness: 25., color: [1.0, 0.0, 0.0] }]);
-        frame.rrects(&[RRect { left: 250.0, right: 350.0, top: 300.0, bottom: 350.0, thickness: 10., radius: 20., color: [0.0, 1.0, 0.0]}]);
-        *self = Self::Running(window, graphics, frame);
+        let mut canvas = Canvas::new();
+        let circles: Vec<Circle> = (0..300).step_by(50).into_iter().map(|num| {
+            Circle { center:[250.0+(num as f32),200.0], radius: 20., thickness: 5., color: [1.0, 0.0, 0.0] }
+        }).collect();
+        canvas.circles(&circles);
+        canvas.rrects(&[RRect { left: 250.0, right: 350.0, top: 300.0, bottom: 350.0, thickness: 10., radius: 20., color: [0.0, 1.0, 0.0]}]);
+        *self = Self::Running(window, graphics, canvas);
     }
 
     fn suspended(&mut self, event_loop: &ActiveEventLoop) {
@@ -54,8 +57,8 @@ impl ApplicationHandler for App {
             WindowEvent::RedrawRequested => {
                 match self {
                     App::Paused => todo!(),
-                    App::Running(_, graphics, frame) => {
-                        let renderers = frame.renderers(graphics);
+                    App::Running(_, graphics, canvas) => {
+                        let renderers = canvas.renderers(graphics);
                         graphics.render(&renderers);
                     }
                 }

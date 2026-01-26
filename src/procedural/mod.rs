@@ -6,7 +6,7 @@ use zerocopy::{Immutable, IntoBytes};
 
 use crate::graphics::{Graphics, Vertex};
 
-pub mod frame;
+pub mod canvas;
 
 // pub mod point;
 // pub mod line;

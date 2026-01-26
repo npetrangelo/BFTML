@@ -7,11 +7,11 @@ enum Shapes {
 
 // What I would really like here, is a collection of renderables - that's proving difficult because I can't implement IntoRenderer directly on an enum.
 
-pub struct Frame {
+pub struct Canvas {
     layers: Vec<Shapes>
 }
 
-impl Frame {
+impl Canvas {
     pub fn new() -> Self {
         Self {
             layers: Vec::new(),
@@ -27,7 +27,7 @@ impl Frame {
     }
 }
 
-impl IntoRenderers for Frame {
+impl IntoRenderers for Canvas {
     fn renderers(&self, graphics: &Graphics) -> Vec<Renderer> {
         self.layers.iter().map(|layer| {
             match layer {
