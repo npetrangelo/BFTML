@@ -1,30 +1,32 @@
-use wgpu::include_wgsl;
+use wgpu::{Device, include_wgsl};
 use wgpu_macros::VertexLayout;
 use zerocopy::{Immutable, IntoBytes};
 
-use crate::{graphics::Vertex, procedural::IntoRenderer};
-
+use crate::{graphics::{Vertex, uniforms::Uniforms}, procedural::IntoRenderer};
 
 #[derive(IntoBytes, Immutable, VertexLayout)]
 #[layout(Instance)]
-#[location = 1]
+#[location = 0]
+#[repr(C)]
 pub struct Rect {
     pub left: f32,
     pub right: f32,
     pub top: f32,
     pub bottom: f32,
     pub thickness: f32,
-    pub color: [f32; 3],
+    pub color: [f32; 4],
 }
 
 impl Vertex for Rect {}
 
-impl IntoRenderer<Rect, ()> for &[Rect] {
+impl IntoRenderer<Rect> for &[Rect] {
     const SHADER: wgpu::ShaderModuleDescriptor<'static> = include_wgsl!("../shaders/rect.wgsl");
 
     fn instances(&self) -> &[Rect] {
         self
     }
-
-    fn uniforms(&self) -> () { }
+    
+    fn bindings(&self, uniforms: &Uniforms, device: &Device) -> Vec<crate::graphics::uniforms::Binding> {
+        vec![uniforms.binding(&[uniforms.screen.as_ref()], device)]
+    }
 }

@@ -22,11 +22,16 @@ impl ApplicationHandler for App {
         ).unwrap());
         let graphics = Graphics::new(window.clone());
         let mut canvas = Canvas::new();
-        let circles: Vec<Circle> = (0..300).step_by(50).into_iter().map(|num| {
-            Circle { center:[250.0+(num as f32),200.0], radius: 20., thickness: 5., color: [1.0, 0.0, 0.0] }
+        let circles: Vec<Circle> = (0..300).step_by(50).map(|num| {
+            Circle { 
+                center: [(250.0 + num as f32), 200.0], 
+                radius: 20.0,
+                thickness: 5.0, 
+                color: [1.0, 0.0, 0.0, 1.0] 
+            }
         }).collect();
         canvas.circles(&circles);
-        canvas.rrects(&[RRect { left: 250.0, right: 350.0, top: 300.0, bottom: 350.0, thickness: 10., radius: 20., color: [0.0, 1.0, 0.0]}]);
+        canvas.rrects(&[RRect { left: 250.0, right: 350.0, top: 300.0, bottom: 350.0, thickness: 10., radius: 20., color: [0.0, 1.0, 0.0, 1.0]}]);
         *self = Self::Running(window, graphics, canvas);
     }
 
@@ -67,8 +72,8 @@ impl ApplicationHandler for App {
 
                 match self {
                     App::Paused => todo!(),
-                    App::Running(_, graphics, _) => {
-                        graphics.resize(physical_size);
+                    App::Running(window, graphics, _) => {
+                        graphics.resize(physical_size, window.scale_factor());
                     }
                 }
             },

@@ -1,9 +1,4 @@
-use crate::{graphics::Graphics, procedural::{IntoRenderers, Renderer, circle::Circle, rrect::RRect}};
-
-enum Shapes {
-    Circles(Vec<Circle>),
-    RRects(Vec<RRect>)
-}
+use crate::{graphics::Graphics, procedural::{IntoRenderers, Renderer, Shapes, circle::Circle, rrect::RRect}};
 
 // What I would really like here, is a collection of renderables - that's proving difficult because I can't implement IntoRenderer directly on an enum.
 

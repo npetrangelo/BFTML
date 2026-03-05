@@ -1,23 +1,24 @@
 use std::sync::Arc;
-use wgpu::ExperimentalFeatures;
 use wgpu_macros::VertexLayout;
-use winit::window::Window;
+use winit::{dpi::LogicalSize, window::Window};
 use zerocopy::{Immutable, IntoBytes};
 
-use crate::procedural::{IntoRenderer, Renderer, Uniforms};
+use crate::{graphics::uniforms::Uniforms, procedural::{IntoRenderer, Renderer}};
 
-pub mod bindings;
+// pub mod bindings;
 // pub mod middleware;
+pub mod uniforms;
 
 const BLACK: wgpu::Color = wgpu::Color { r: 0., g: 0., b: 0., a: 1. };
 
 pub trait Vertex: IntoBytes + Immutable + VertexLayout {}
 
 pub struct Graphics {
-    device: wgpu::Device,
+    pub device: wgpu::Device,
     queue: wgpu::Queue,
     surface: wgpu::Surface<'static>,
     config: wgpu::SurfaceConfiguration,
+    pub uniforms: Uniforms,
 }
 
 impl Graphics {
@@ -32,6 +33,7 @@ impl Graphics {
         // The surface needs to live as long as the window that created it.
         // State owns the window, so this should be safe.
         let size = window.inner_size(); // Grab size before window is moved
+        let scale_factor = window.scale_factor();
         let surface = instance.create_surface(window).unwrap();
 
         let (adapter, device, queue) = pollster::block_on(async {
@@ -50,10 +52,14 @@ impl Graphics {
                     label: None,
                     memory_hints: wgpu::MemoryHints::Performance,
                     trace: wgpu::Trace::Off,
-                    experimental_features: ExperimentalFeatures::disabled(),
+                    experimental_features: wgpu::ExperimentalFeatures::disabled(),
                 }).await.expect("Device and queue should exist");
             (adapter, device, queue)
         });
+
+        device.on_uncaptured_error(Arc::new(|error| {
+            eprintln!("wgpu error: {}", error);
+        }));
 
         let surface_caps = surface.get_capabilities(&adapter);
 
@@ -77,6 +83,8 @@ impl Graphics {
         };
 
         surface.configure(&device, &config);
+        let logical: LogicalSize<f32> = size.to_logical(scale_factor);
+        let uniforms = Uniforms::init(&device, &logical);
 
         // Check here when using updated wgpu
         // https://github.com/gfx-rs/wgpu/issues/3756
@@ -92,11 +100,12 @@ impl Graphics {
             queue,
             surface,
             config,
+            uniforms
         }
     }
 
-    pub fn renderer<I: Vertex, U: Uniforms, T: IntoRenderer<I, U>>(&self, t: T) -> Renderer {
-        t.renderer(&self.device, &self.config.format)
+    pub fn renderer<I: Vertex, T: IntoRenderer<I>>(&self, t: T) -> Renderer {
+        t.renderer(&self.device, &self.uniforms, &self.config.format)
     }
 
     pub fn render(&self, renderers: &[Renderer]) -> Result<(), wgpu::SurfaceError> {
@@ -135,11 +144,13 @@ impl Graphics {
         Ok(())
     }
 
-    pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+    pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>, scale_factor: f64) {
         if new_size.width > 0 && new_size.height > 0 {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
+            let logical: winit::dpi::LogicalSize<f32> = new_size.to_logical(scale_factor);
+            self.uniforms.screen.write(&self.queue, &[logical.width, logical.height]);
         }
     }
 }
