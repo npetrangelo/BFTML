@@ -1,21 +1,14 @@
-struct Uniforms {
-    screen: vec2<f32>,  // viewport width, height in pixels
-}
-
-@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(0) var<uniform> size: vec2<f32>;
+@group(0) @binding(1) var<uniform> scale: f32;
 
 fn to_clip(pixel: vec2<f32>) -> vec2<f32> {
     // Pixel (0,0) is top-left
     // Clip (-1,1) is top-left
     return vec2(
-         2.0 * pixel.x / uniforms.screen.x - 1.0,
-        -2.0 * pixel.y / uniforms.screen.y + 1.0,
+         2.0 * pixel.x / size.x - 1.0,
+        -2.0 * pixel.y / size.y + 1.0,
     );
 }
-
-// struct VertexInput {
-//     @location(0) position: vec3<f32>,
-// };
 
 // Thickness grows border outwards
 struct InstanceInput {
@@ -45,14 +38,14 @@ fn sdBox(p: vec2<f32>, b: vec2<f32>) -> f32 {
 @vertex
 fn vs_main(
     @builtin(vertex_index) vid: u32,
-    instance: InstanceInput,
+    in: InstanceInput,
 ) -> VertexOutput {
     // Add thickness padding so the border isn't clipped at the quad edge
-    let padding = instance.thickness;
-    let left   = instance.left   - padding;
-    let right  = instance.right  + padding;
-    let top    = instance.top    - padding;
-    let bottom = instance.bottom + padding;
+    let padding = in.thickness * scale;
+    let left   = in.left * scale   - padding;
+    let right  = in.right * scale  + padding;
+    let top    = in.top * scale    - padding;
+    let bottom = in.bottom * scale + padding;
 
     let x = select(left, right, (vid & 1u) != 0u);
     let y = select(top, bottom, (vid & 2u) != 0u);
@@ -62,28 +55,14 @@ fn vs_main(
     
     // Pass through everything the fragment shader needs
     out.center = vec2(
-        (instance.left + instance.right)  / 2.0,
-        (instance.top  + instance.bottom) / 2.0,
-    );
-    out.size      = vec2(instance.right - instance.left, instance.bottom - instance.top);
-    out.thickness = instance.thickness;
-    out.color     = instance.color;
+        (in.left + in.right)  / 2.0,
+        (in.top  + in.bottom) / 2.0,
+    ) * scale;
+    out.size      = vec2(in.right - in.left, in.bottom - in.top) * scale;
+    out.thickness = in.thickness * scale;
+    out.color     = in.color;
     return out;
 }
-
-// @vertex
-// fn vs_main(
-//     model: VertexInput,
-//     instance: InstanceInput,
-// ) -> VertexOutput {
-//     var out: VertexOutput;
-//     out.clip_position = vec4<f32>(model.position, 1.0);
-//     out.center = (vec2(instance.left, instance.top) + vec2(instance.right, instance.bottom))/2.0;
-//     out.size = vec2(instance.right - instance.left, instance.bottom - instance.top);
-//     out.thickness = instance.thickness;
-//     out.color = instance.color;
-//     return out;
-// }
 
 // Fragment shader
 

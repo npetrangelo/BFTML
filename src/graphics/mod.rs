@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use wgpu_macros::VertexLayout;
-use winit::{dpi::LogicalSize, window::Window};
+use winit::{dpi::PhysicalSize, window::Window};
 use zerocopy::{Immutable, IntoBytes};
 
 use crate::{graphics::uniforms::Uniforms, procedural::{IntoRenderer, Renderer}};
@@ -33,7 +33,7 @@ impl Graphics {
         // The surface needs to live as long as the window that created it.
         // State owns the window, so this should be safe.
         let size = window.inner_size(); // Grab size before window is moved
-        let scale_factor = window.scale_factor();
+        let scale = window.scale_factor();
         let surface = instance.create_surface(window).unwrap();
 
         let (adapter, device, queue) = pollster::block_on(async {
@@ -83,8 +83,7 @@ impl Graphics {
         };
 
         surface.configure(&device, &config);
-        let logical: LogicalSize<f32> = size.to_logical(scale_factor);
-        let uniforms = Uniforms::init(&device, &logical);
+        let uniforms = Uniforms::init(&device, &size.cast(), scale as f32);
 
         // Check here when using updated wgpu
         // https://github.com/gfx-rs/wgpu/issues/3756
@@ -149,8 +148,15 @@ impl Graphics {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            let logical: winit::dpi::LogicalSize<f32> = new_size.to_logical(scale_factor);
-            self.uniforms.screen.write(&self.queue, &[logical.width, logical.height]);
+            let size: PhysicalSize<f32> = new_size.cast();
+            self.uniforms.size.write(&self.queue, &[size.width, size.height]);
         }
+    }
+
+    pub fn rescale(&mut self, scale_factor: f64, new_size: PhysicalSize<u32>) {
+        self.uniforms.scale.write(&self.queue, &(scale_factor as f32));
+        // Size also changes when scale changes
+        let size: PhysicalSize<f32> = new_size.cast();
+        self.uniforms.size.write(&self.queue, &[size.width, size.height]);
     }
 }

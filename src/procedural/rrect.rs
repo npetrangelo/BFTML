@@ -28,6 +28,6 @@ impl IntoRenderer<RRect> for &[RRect] {
     }
     
     fn bindings(&self, uniforms: &Uniforms, device: &Device) -> Vec<crate::graphics::uniforms::Binding> {
-        vec![uniforms.binding(&[uniforms.screen.as_ref()], device)]
+        vec![uniforms.binding(&[uniforms.size.as_ref(), uniforms.scale.as_ref()], device)]
     }
 }

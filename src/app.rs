@@ -77,6 +77,14 @@ impl ApplicationHandler for App {
                     }
                 }
             },
+            WindowEvent::ScaleFactorChanged { scale_factor, inner_size_writer } => {
+                match self {
+                    App::Running(window, graphics, _) => {
+                        graphics.rescale(scale_factor, window.inner_size());
+                    }
+                    _ => {}
+                }
+            }
             _ => (),
         }
     }

@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use wgpu::{BindGroup, BindGroupLayout, BindGroupLayoutEntry, BindingType, Buffer, BufferUsages, Device, Queue, ShaderStages, util::{BufferInitDescriptor, DeviceExt}};
-use winit::dpi::LogicalSize;
+use winit::dpi::PhysicalSize;
 use zerocopy::{Immutable, IntoBytes};
 
 pub struct Layout {
@@ -67,7 +67,9 @@ impl<T: IntoBytes + Immutable> Uniform<T> {
 }
 
 pub struct Uniforms {
-    pub screen: Uniform<[f32; 2]>
+    /// Physical space
+    pub size: Uniform<[f32; 2]>,
+    pub scale: Uniform<f32>,
 }
 
 pub struct Binding {
@@ -76,14 +78,18 @@ pub struct Binding {
 }
 
 impl Uniforms {
-    pub fn init(device: &Device, size: &LogicalSize<f32>) -> Self {
-        println!("Screen size: {}x{}", size.width, size.height);
+    pub fn init(device: &Device, size: &PhysicalSize<f32>, scale: f32) -> Self {
         Self {
-            screen: Uniform::init(
+            size: Uniform::init(
                 &[size.width, size.height],
                 ShaderStages::VERTEX,
                 device,
             ),
+            scale: Uniform::init(
+                &scale,
+                ShaderStages::VERTEX,
+                device
+            )
         }
     }
 

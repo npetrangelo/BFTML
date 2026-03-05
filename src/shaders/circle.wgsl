@@ -1,15 +1,12 @@
-struct Uniforms {
-    screen: vec2<f32>,  // viewport width, height in pixels
-}
-
-@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(0) var<uniform> size: vec2<f32>;
+@group(0) @binding(1) var<uniform> scale: f32;
 
 fn to_clip(pixel: vec2<f32>) -> vec2<f32> {
     // Pixel (0,0) is top-left
     // Clip (-1,1) is top-left
     return vec2(
-         2.0 * pixel.x / uniforms.screen.x - 1.0,
-        -2.0 * pixel.y / uniforms.screen.y + 1.0,
+         2.0 * pixel.x / size.x - 1.0,
+        -2.0 * pixel.y / size.y + 1.0,
     );
 }
 
@@ -23,10 +20,10 @@ struct InstanceInput {
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
-    @location(1) center: vec2<f32>,
-    @location(2) radius: f32,
-    @location(3) thickness: f32,
-    @location(4) color: vec4<f32>,
+    @location(0) center: vec2<f32>,
+    @location(1) radius: f32,
+    @location(2) thickness: f32,
+    @location(3) color: vec4<f32>,
 };
 
 fn sdCircle(p: vec2<f32>, r: f32) -> f32 {
@@ -36,21 +33,21 @@ fn sdCircle(p: vec2<f32>, r: f32) -> f32 {
 @vertex
 fn vs_main(
     @builtin(vertex_index) vid: u32,
-    instance: InstanceInput,
+    in: InstanceInput,
 ) -> VertexOutput {
     // Pad the bounding quad by thickness so the border isn't clipped at the edge
-    let extent = instance.radius + instance.thickness;
+    let extent = (in.radius + in.thickness) * scale;
 
     // Bit 0 → left/right, Bit 1 → top/bottom
-    let x = instance.center.x + select(-extent, extent, (vid & 1u) != 0u);
-    let y = instance.center.y + select(-extent, extent, (vid & 2u) != 0u);
+    let x = in.center.x * scale + select(-extent, extent, (vid & 1u) != 0u);
+    let y = in.center.y * scale + select(-extent, extent, (vid & 2u) != 0u);
 
     var out: VertexOutput;
     out.clip_position = vec4<f32>(to_clip(vec2(x, y)), 0.0, 1.0);
-    out.center    = instance.center;
-    out.radius    = instance.radius;
-    out.thickness = instance.thickness;
-    out.color     = instance.color;
+    out.center    = in.center * scale;
+    out.radius    = in.radius * scale;
+    out.thickness = in.thickness * scale;
+    out.color     = in.color;
     return out;
 }
 
