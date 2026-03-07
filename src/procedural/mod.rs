@@ -1,7 +1,7 @@
 use wgpu::{BindGroup, BufferUsages, Device, RenderPass, RenderPipelineDescriptor, ShaderModuleDescriptor, TextureFormat, util::{BufferInitDescriptor, DeviceExt}};
 use zerocopy::IntoBytes;
 
-use crate::{graphics::{Graphics, Vertex, uniforms::{Binding, Uniforms}}, procedural::{circle::Circle, rrect::RRect}};
+use crate::{graphics::{Graphics, Vertex, uniforms::{Binding, Bindings}}, procedural::{circle::Circle, rrect::RRect}};
 
 pub mod canvas;
 
@@ -17,19 +17,19 @@ pub enum Shapes {
     RRects(Vec<RRect>)
 }
 
-pub struct Renderer {
+pub struct Renderer<'a> {
     pipeline: wgpu::RenderPipeline,
     instances: wgpu::Buffer,
     number: u32,
-    bindgroups: Vec<BindGroup>,
+    bindgroups: Vec<&'a BindGroup>,
 }
 
-impl Renderer {
+impl Renderer<'_> {
     pub fn render(&self, pass: &mut RenderPass) {
         // println!("Rendering {} instances", self.number);
         pass.set_pipeline(&self.pipeline);
         pass.set_vertex_buffer(0, self.instances.slice(..));
-        self.bindgroups.iter().enumerate().for_each(|(index, group)| {
+        self.bindgroups.iter().enumerate().for_each(|(index, &group)| {
             pass.set_bind_group(index as u32, group, &[]);
         });
         pass.draw(0..4, 0..self.number);
@@ -40,22 +40,22 @@ pub trait IntoRenderer<I: Vertex> {
     const SHADER: ShaderModuleDescriptor<'static>;
 
     fn instances(&self) -> &[I];
-    fn bindings(&self, uniforms: &Uniforms, device: &Device) -> Vec<Binding>;
+    fn bind<'a>(&self, bindings: &'a Bindings) -> Vec<&'a Binding>;
 
-    fn renderer(&self, device: &Device, uniforms: &Uniforms, format: &TextureFormat) -> Renderer {
+    fn renderer<'a>(&self, device: &Device, bindings: &'a Bindings, format: &TextureFormat) -> Renderer<'a> {
         let module = &device.create_shader_module(Self::SHADER);
         let instances = self.instances();
 
-        let (bind_group_layouts, bind_groups): (Vec<_>, Vec<_>) = self.bindings(uniforms, device)
+        let (bind_group_layouts, bind_groups): (Vec<_>, Vec<_>) = self.bind(bindings)
             .into_iter()
-            .map(|bg| (bg.layout, bg.group))
+            .map(|bg| (&bg.layout, &bg.group))
             .unzip();
 
-        let layout_refs: Vec<&wgpu::BindGroupLayout> = bind_group_layouts.iter().collect();
+        // let layout_refs: Vec<&wgpu::BindGroupLayout> = bind_group_layouts.iter().collect();
 
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
-            bind_group_layouts: &layout_refs,
+            bind_group_layouts: &bind_group_layouts,
             immediate_size: 0,
         });
 
@@ -112,5 +112,5 @@ pub trait IntoRenderer<I: Vertex> {
 }
 
 pub trait IntoRenderers {
-    fn renderers(&self, graphics: &Graphics) -> Vec<Renderer>;
+    fn renderers<'a>(&self, graphics: &'a Graphics) -> Vec<Renderer<'a>>;
 }

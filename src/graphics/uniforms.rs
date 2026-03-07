@@ -66,34 +66,13 @@ impl<T: IntoBytes + Immutable> Uniform<T> {
     }
 }
 
-pub struct Uniforms {
-    /// Physical space
-    pub size: Uniform<[f32; 2]>,
-    pub scale: Uniform<f32>,
-}
-
 pub struct Binding {
     pub layout: BindGroupLayout,
     pub group: BindGroup,
 }
 
-impl Uniforms {
-    pub fn init(device: &Device, size: &PhysicalSize<f32>, scale: f32) -> Self {
-        Self {
-            size: Uniform::init(
-                &[size.width, size.height],
-                ShaderStages::VERTEX,
-                device,
-            ),
-            scale: Uniform::init(
-                &scale,
-                ShaderStages::VERTEX,
-                device
-            )
-        }
-    }
-
-    pub fn binding(&self, uniforms: &[UniformRef], device: &Device) -> Binding {
+impl Binding {
+    fn new(uniforms: &[UniformRef], device: &Device) -> Self {
         let (layout_entries, entries): (Vec<_>, Vec<_>) = uniforms
             .iter()
             .enumerate()
@@ -119,6 +98,41 @@ impl Uniforms {
             entries: &entries,
         });
 
-        Binding { layout, group }
+        Self { layout, group }
+    }
+}
+
+pub struct Uniforms {
+    /// Physical space
+    pub size: Uniform<[f32; 2]>,
+    pub scale: Uniform<f32>,
+}
+
+impl Uniforms {
+    pub fn init(device: &Device, size: &PhysicalSize<f32>, scale: f32) -> Self {
+        Self {
+            size: Uniform::init(
+                &[size.width, size.height],
+                ShaderStages::VERTEX,
+                device,
+            ),
+            scale: Uniform::init(
+                &scale,
+                ShaderStages::VERTEX,
+                device,
+            )
+        }
+    }
+}
+
+pub struct Bindings {
+    pub screen: Binding,
+}
+
+impl Bindings {
+    pub fn init(device: &Device, uniforms: &Uniforms) -> Self {
+        Self {
+            screen: Binding::new(&[uniforms.size.as_ref(), uniforms.scale.as_ref()], device)
+        }
     }
 }

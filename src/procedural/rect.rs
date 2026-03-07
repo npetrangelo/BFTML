@@ -1,8 +1,8 @@
-use wgpu::{Device, include_wgsl};
+use wgpu::include_wgsl;
 use wgpu_macros::VertexLayout;
 use zerocopy::{Immutable, IntoBytes};
 
-use crate::{graphics::{Vertex, uniforms::Uniforms}, procedural::IntoRenderer};
+use crate::{graphics::{Vertex, uniforms::{Binding, Bindings}}, procedural::IntoRenderer};
 
 #[derive(IntoBytes, Immutable, VertexLayout)]
 #[layout(Instance)]
@@ -26,7 +26,7 @@ impl IntoRenderer<Rect> for &[Rect] {
         self
     }
     
-    fn bindings(&self, uniforms: &Uniforms, device: &Device) -> Vec<crate::graphics::uniforms::Binding> {
-        vec![uniforms.binding(&[uniforms.size.as_ref(), uniforms.scale.as_ref()], device)]
+    fn bind<'a>(&self, bindings: &'a Bindings) -> Vec<&'a Binding> {
+        vec![&bindings.screen]
     }
 }

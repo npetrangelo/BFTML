@@ -3,7 +3,7 @@ use wgpu_macros::VertexLayout;
 use winit::{dpi::PhysicalSize, window::Window};
 use zerocopy::{Immutable, IntoBytes};
 
-use crate::{graphics::uniforms::Uniforms, procedural::{IntoRenderer, Renderer}};
+use crate::{graphics::uniforms::{Bindings, Uniforms}, procedural::{IntoRenderer, Renderer}};
 
 // pub mod bindings;
 // pub mod middleware;
@@ -19,6 +19,7 @@ pub struct Graphics {
     surface: wgpu::Surface<'static>,
     config: wgpu::SurfaceConfiguration,
     pub uniforms: Uniforms,
+    pub bindings: Bindings,
 }
 
 impl Graphics {
@@ -84,6 +85,7 @@ impl Graphics {
 
         surface.configure(&device, &config);
         let uniforms = Uniforms::init(&device, &size.cast(), scale as f32);
+        let bindings = Bindings::init(&device, &uniforms);
 
         // Check here when using updated wgpu
         // https://github.com/gfx-rs/wgpu/issues/3756
@@ -99,12 +101,13 @@ impl Graphics {
             queue,
             surface,
             config,
-            uniforms
+            uniforms,
+            bindings
         }
     }
 
     pub fn renderer<I: Vertex, T: IntoRenderer<I>>(&self, t: T) -> Renderer {
-        t.renderer(&self.device, &self.uniforms, &self.config.format)
+        t.renderer(&self.device, &self.bindings, &self.config.format)
     }
 
     pub fn render(&self, renderers: &[Renderer]) -> Result<(), wgpu::SurfaceError> {
@@ -143,7 +146,7 @@ impl Graphics {
         Ok(())
     }
 
-    pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>, scale_factor: f64) {
+    pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
             self.config.width = new_size.width;
             self.config.height = new_size.height;

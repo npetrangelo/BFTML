@@ -73,7 +73,7 @@ impl ApplicationHandler for App {
                 match self {
                     App::Paused => todo!(),
                     App::Running(window, graphics, _) => {
-                        graphics.resize(physical_size, window.scale_factor());
+                        graphics.resize(physical_size);
                     }
                 }
             },

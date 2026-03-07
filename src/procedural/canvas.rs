@@ -23,7 +23,7 @@ impl Canvas {
 }
 
 impl IntoRenderers for Canvas {
-    fn renderers(&self, graphics: &Graphics) -> Vec<Renderer> {
+    fn renderers<'a>(&self, graphics: &'a Graphics) -> Vec<Renderer<'a>> {
         self.layers.iter().map(|layer| {
             match layer {
                 Shapes::Circles(circles) => graphics.renderer(circles.as_slice()),
