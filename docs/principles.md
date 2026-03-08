@@ -2,6 +2,13 @@
 
 The following are some of the most important design principles for BFTML:
 
+### The Correct Abstraction
+Abstractions are important to get right. If your abstraction is too low level, the ecosystem will develop redundancies to fill the gap. Too high, and the ecosystem becomes constrained by the limits of the platform unless and until the abstraction expands to accomodate. Although subtle, this is probably the most important of the principles.
+
+Over the years and decades, it has become apparent that the html browser is both too high and too low simultaneously. This is because the document abstraction and the component abstraction are orthogonal: A document is a static hierarchy of content with implicit layout and styling, whereas a component is a reusable, stateful, self-contained unit of behavior. These are different things organized along different axes, and no amount of expansion of one abstraction naturally produces the other. The browser expanded upward into component territory by adding Javascript, the DOM API, and dynamic elements, and also expanded downward by exposing CSS primitives and canvas — but the document metaphor remained the foundation throughout, which is why the expansion was always awkward and never complete.
+
+BFTML starts from the component abstraction, which is the right foundation for web apps from the beginning rather than a destination the platform has been awkwardly expanding toward for decades.
+
 ### Single Responsibility Principle
 In the component paradigm, concerns are separated by component. This implies that the most primitve elements should have the most narrow concerns, which points to the single responsibility principle. As such, the primitives in BFTML aim to be as simple as possible. For example, the `border` primitive will only add a border around something. There will not be any additional behaviors for it, that will be all it does. For other behaviors, reach for other primitives.
 
