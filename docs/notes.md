@@ -53,7 +53,9 @@ Deconstructed button:
 <event onclick=f()>
     <box color=red>
         <text color=white>
-            SUBSCRIBE
+            <centered>
+                SUBSCRIBE
+            </centered>
         </text>
     </box>
 </event>
