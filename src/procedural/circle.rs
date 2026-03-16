@@ -1,4 +1,3 @@
-use wgpu::include_wgsl;
 use wgpu_macros::VertexLayout;
 use zerocopy::{Immutable, IntoBytes};
 
@@ -21,7 +20,12 @@ pub struct Circle {
 impl Vertex for Circle {}
 
 impl IntoRenderer<Circle> for &[Circle] {
-    const SHADER: wgpu::ShaderModuleDescriptor<'static> = include_wgsl!("../shaders/circle.wgsl");
+    const VERTEX: &'static str = "vs_main";
+    const FRAGMENT: &'static str = "fs_fill";
+
+    fn shader<'a>(&self, shaders: &'a crate::graphics::Shaders) -> &'a wgpu::ShaderModule {
+        &shaders.circle
+    }
 
     fn instances(&self) -> &[Circle] {
         self

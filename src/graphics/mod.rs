@@ -1,11 +1,11 @@
 use std::sync::Arc;
+use wgpu::{ShaderModule, include_wgsl};
 use wgpu_macros::VertexLayout;
 use winit::{dpi::PhysicalSize, window::Window};
 use zerocopy::{Immutable, IntoBytes};
 
 use crate::{graphics::uniforms::{Bindings, Uniforms}, procedural::{IntoRenderer, Renderer}};
 
-// pub mod bindings;
 // pub mod middleware;
 pub mod uniforms;
 
@@ -13,13 +13,30 @@ const BLACK: wgpu::Color = wgpu::Color { r: 0., g: 0., b: 0., a: 1. };
 
 pub trait Vertex: IntoBytes + Immutable + VertexLayout {}
 
+pub struct Shaders {
+    pub circle: ShaderModule,
+    pub rect: ShaderModule,
+    pub rrect: ShaderModule,
+}
+
+impl Shaders {
+    fn init(device: &wgpu::Device) -> Self {
+        Self {
+            circle: device.create_shader_module(include_wgsl!("../shaders/circle.wgsl")),
+            rect: device.create_shader_module(include_wgsl!("../shaders/rect.wgsl")),
+            rrect: device.create_shader_module(include_wgsl!("../shaders/rrect.wgsl")),
+        }
+    }
+}
+
 pub struct Graphics {
     pub device: wgpu::Device,
     queue: wgpu::Queue,
     surface: wgpu::Surface<'static>,
-    config: wgpu::SurfaceConfiguration,
+    pub config: wgpu::SurfaceConfiguration,
     pub uniforms: Uniforms,
     pub bindings: Bindings,
+    pub shaders: Shaders,
 }
 
 impl Graphics {
@@ -29,10 +46,6 @@ impl Graphics {
             ..Default::default()
         });
 
-        // # Safety
-        //
-        // The surface needs to live as long as the window that created it.
-        // State owns the window, so this should be safe.
         let size = window.inner_size(); // Grab size before window is moved
         let scale = window.scale_factor();
         let surface = instance.create_surface(window).unwrap();
@@ -87,6 +100,8 @@ impl Graphics {
         let uniforms = Uniforms::init(&device, &size.cast(), scale as f32);
         let bindings = Bindings::init(&device, &uniforms);
 
+        let shaders = Shaders::init(&device);
+
         // Check here when using updated wgpu
         // https://github.com/gfx-rs/wgpu/issues/3756
         unsafe {
@@ -102,12 +117,13 @@ impl Graphics {
             surface,
             config,
             uniforms,
-            bindings
+            bindings,
+            shaders
         }
     }
 
     pub fn renderer<I: Vertex, T: IntoRenderer<I>>(&self, t: T) -> Renderer {
-        t.renderer(&self.device, &self.bindings, &self.config.format)
+        t.renderer(&self)
     }
 
     pub fn render(&self, renderers: &[Renderer]) -> Result<(), wgpu::SurfaceError> {
@@ -157,8 +173,10 @@ impl Graphics {
     }
 
     pub fn rescale(&mut self, scale_factor: f64, new_size: PhysicalSize<u32>) {
+        self.config.width = new_size.width;
+        self.config.height = new_size.height;
+        self.surface.configure(&self.device, &self.config);
         self.uniforms.scale.write(&self.queue, &(scale_factor as f32));
-        // Size also changes when scale changes
         let size: PhysicalSize<f32> = new_size.cast();
         self.uniforms.size.write(&self.queue, &[size.width, size.height]);
     }

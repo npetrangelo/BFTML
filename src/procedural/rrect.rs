@@ -1,8 +1,7 @@
-use wgpu::{Device, include_wgsl};
 use wgpu_macros::VertexLayout;
 use zerocopy::{Immutable, IntoBytes};
 
-use crate::{graphics::{Vertex, uniforms::{Binding, Bindings, Uniforms}}, procedural::IntoRenderer};
+use crate::{graphics::{Vertex, uniforms::{Binding, Bindings}}, procedural::IntoRenderer};
 
 #[derive(Clone, IntoBytes, Immutable, VertexLayout)]
 #[layout(Instance)]
@@ -21,7 +20,12 @@ pub struct RRect {
 impl Vertex for RRect {}
 
 impl IntoRenderer<RRect> for &[RRect] {
-    const SHADER: wgpu::ShaderModuleDescriptor<'static> = include_wgsl!("../shaders/rrect.wgsl");
+    const VERTEX: &'static str = "vs_main";
+    const FRAGMENT: &'static str = "fs_border";
+
+    fn shader<'a>(&self, shaders: &'a crate::graphics::Shaders) -> &'a wgpu::ShaderModule {
+        &shaders.rrect
+    }
 
     fn instances(&self) -> &[RRect] {
         self

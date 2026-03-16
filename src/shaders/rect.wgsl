@@ -73,3 +73,10 @@ fn fs_border(in: VertexOutput) -> @location(0) vec4<f32> {
     let alpha = clamp(-mask, 0.0, 1.0);
     return vec4<f32>(in.color.rgb, in.color.a * alpha);
 }
+
+@fragment
+fn fs_fill(in: VertexOutput) -> @location(0) vec4<f32> {
+    let d = sdBox(in.clip_position.xy - in.center, in.size / 2.0);
+    let alpha = clamp(-d, 0.0, 1.0);
+    return vec4<f32>(in.color.rgb, in.color.a * alpha);
+}

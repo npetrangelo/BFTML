@@ -1,7 +1,7 @@
-use wgpu::{BindGroup, BufferUsages, Device, RenderPass, RenderPipelineDescriptor, ShaderModuleDescriptor, TextureFormat, util::{BufferInitDescriptor, DeviceExt}};
+use wgpu::{BindGroup, BufferUsages, Device, RenderPass, RenderPipelineDescriptor, ShaderModule, ShaderModuleDescriptor, TextureFormat, util::{BufferInitDescriptor, DeviceExt}};
 use zerocopy::IntoBytes;
 
-use crate::{graphics::{Graphics, Vertex, uniforms::{Binding, Bindings}}, procedural::{circle::Circle, rrect::RRect}};
+use crate::{graphics::{Graphics, Shaders, Vertex, uniforms::{Binding, Bindings}}, procedural::{circle::Circle, rrect::RRect}};
 
 pub mod canvas;
 
@@ -37,44 +37,45 @@ impl Renderer<'_> {
 }
 
 pub trait IntoRenderer<I: Vertex> {
-    const SHADER: ShaderModuleDescriptor<'static>;
+    // const SHADER: ShaderModuleDescriptor<'static>;
+    const VERTEX: &'static str;
+    const FRAGMENT: &'static str;
 
+    fn shader<'a>(&self, shaders: &'a Shaders) -> &'a ShaderModule;
     fn instances(&self) -> &[I];
     fn bind<'a>(&self, bindings: &'a Bindings) -> Vec<&'a Binding>;
 
-    fn renderer<'a>(&self, device: &Device, bindings: &'a Bindings, format: &TextureFormat) -> Renderer<'a> {
-        let module = &device.create_shader_module(Self::SHADER);
+    fn renderer<'a>(&self, graphics: &'a Graphics) -> Renderer<'a> {
+        let module = self.shader(&graphics.shaders);
         let instances = self.instances();
 
-        let (bind_group_layouts, bind_groups): (Vec<_>, Vec<_>) = self.bind(bindings)
+        let (bind_group_layouts, bind_groups): (Vec<_>, Vec<_>) = self.bind(&graphics.bindings)
             .into_iter()
             .map(|bg| (&bg.layout, &bg.group))
             .unzip();
 
-        // let layout_refs: Vec<&wgpu::BindGroupLayout> = bind_group_layouts.iter().collect();
-
-        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let layout = graphics.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &bind_group_layouts,
             immediate_size: 0,
         });
 
         Renderer {
-            pipeline: device.create_render_pipeline(&RenderPipelineDescriptor {
+            pipeline: graphics.device.create_render_pipeline(&RenderPipelineDescriptor {
                 label: Some("Shape Render Pipeline"),
                 layout: Some(&layout), // Uniforms would be set here
                 vertex: wgpu::VertexState {
                     module,
-                    entry_point: Some("vs_main"),
+                    entry_point: Some(Self::VERTEX),
                     compilation_options: wgpu::PipelineCompilationOptions::default(),
                     buffers: &[I::LAYOUT],
                 },
                 fragment: Some(wgpu::FragmentState {
                     module,
-                    entry_point: Some("fs_border"),
+                    entry_point: Some(Self::FRAGMENT),
                     compilation_options: wgpu::PipelineCompilationOptions::default(),
                     targets: &[Some(wgpu::ColorTargetState { // 4.
-                        format: *format,
+                        format: graphics.config.format,
                         blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
@@ -100,7 +101,7 @@ pub trait IntoRenderer<I: Vertex> {
                 cache: None,
                 multiview_mask: None,
             }),
-            instances: device.create_buffer_init(&BufferInitDescriptor {
+            instances: graphics.device.create_buffer_init(&BufferInitDescriptor {
                 label: Some("instances"),
                 contents: instances.as_bytes(),
                 usage: BufferUsages::VERTEX
