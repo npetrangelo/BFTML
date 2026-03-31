@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BFTML — Break Free from the Markup Language</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #e8e6f0;
+    --muted: #7a7889;
+    --accent: #a78bfa;
+    --accent2: #6ee7b7;
+    --accent3: #fb923c;
+    --red: #f87171;
+    --mono: 'DM Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--display); overflow: hidden; }
+
+  .deck { width: 100vw; height: 100vh; position: relative; }
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    padding: 4rem 6rem;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    transform: translateY(16px);
+  }
+  .slide.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+  .slide.exit { opacity: 0; transform: translateY(-16px); }
+
+  /* Nav */
+  .nav {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 1rem;
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 100px; padding: 0.5rem 1rem;
+    z-index: 100;
+  }
+  .nav button {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-family: var(--mono); font-size: 13px;
+    padding: 4px 12px; border-radius: 100px;
+    transition: all 0.2s;
+  }
+  .nav button:hover { color: var(--text); background: var(--surface2); }
+  .nav button.active-nav { color: var(--accent); }
+  .slide-counter { font-family: var(--mono); font-size: 12px; color: var(--muted); min-width: 48px; text-align: center; }
+  .dots { display: flex; gap: 6px; align-items: center; }
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border2); cursor: pointer; transition: all 0.2s; }
+  .dot.active { background: var(--accent); width: 16px; border-radius: 3px; }
+
+  /* Typography */
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+  .eyebrow.green { color: var(--accent2); }
+  .eyebrow.orange { color: var(--accent3); }
+  h1 { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; line-height: 1.05; letter-spacing: -0.03em; }
+  h2 { font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; }
+  h3 { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+  .body { font-size: 1.1rem; line-height: 1.7; color: var(--muted); max-width: 52ch; }
+  .body strong { color: var(--text); font-weight: 500; }
+  .large-body { font-size: 1.35rem; line-height: 1.65; color: var(--muted); max-width: 48ch; }
+  .large-body strong { color: var(--text); font-weight: 600; }
+
+  /* Decorative */
+  .line-accent { width: 48px; height: 3px; border-radius: 2px; background: var(--accent); margin-bottom: 2rem; }
+  .line-accent.green { background: var(--accent2); }
+  .line-accent.orange { background: var(--accent3); }
+  .badge {
+    display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
+    padding: 3px 10px; border-radius: 100px; border: 1px solid;
+  }
+  .badge.purple { border-color: var(--accent); color: var(--accent); }
+  .badge.green { border-color: var(--accent2); color: var(--accent2); }
+  .badge.orange { border-color: var(--accent3); color: var(--accent3); }
+  .badge.red { border-color: var(--red); color: var(--red); }
+
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--surface2); padding: 2px 6px; border-radius: 4px; color: var(--accent2); }
+
+  /* Grid layouts */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+
+  /* Pain point cards */
+  .pain-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .pain-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .pain-card.html::before { background: var(--accent3); }
+  .pain-card.css::before { background: #60a5fa; }
+  .pain-card.js::before { background: #facc15; }
+  .pain-card.vision::before { background: var(--accent2); }
+  .pain-card h3 { margin-bottom: 0.75rem; }
+  .pain-card .items { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }
+  .pain-card .item { font-size: 0.875rem; color: var(--muted); display: flex; gap: 8px; align-items: flex-start; line-height: 1.4; }
+  .pain-card .item::before { content: '—'; color: var(--border2); flex-shrink: 0; }
+
+  /* Timeline / history */
+  .timeline { display: flex; flex-direction: column; gap: 0; position: relative; }
+  .timeline::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 1px; background: var(--border); }
+  .tl-item { display: flex; gap: 1.5rem; align-items: flex-start; padding-bottom: 1.5rem; position: relative; }
+  .tl-dot { width: 25px; height: 25px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; }
+  .tl-dot span { font-family: var(--mono); font-size: 9px; color: var(--muted); }
+  .tl-content { padding-top: 2px; }
+  .tl-content h3 { font-size: 0.9rem; margin-bottom: 0.25rem; }
+  .tl-content p { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+  /* Principle cards */
+  .principle-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.25rem;
+  }
+  .principle-card .label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+  .principle-card h3 { font-size: 0.95rem; margin-bottom: 0.5rem; }
+  .principle-card p { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+  /* Question slide */
+  .question-prompt {
+    font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; line-height: 1.2;
+    color: var(--text); letter-spacing: -0.02em;
+  }
+  .discussion-chips { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+  .chip {
+    font-family: var(--mono); font-size: 12px;
+    padding: 8px 16px; border-radius: 100px;
+    border: 1px solid var(--border2); color: var(--muted);
+    cursor: default;
+  }
+
+  /* Code block */
+  .code-block {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.25rem 1.5rem;
+    font-family: var(--mono); font-size: 13px; line-height: 1.8;
+    color: var(--muted);
+  }
+  .code-block .kw { color: var(--accent); }
+  .code-block .tag { color: var(--accent3); }
+  .code-block .attr { color: #60a5fa; }
+  .code-block .val { color: var(--accent2); }
+  .code-block .comment { color: var(--border2); }
+
+  /* Comparison split */
+  .vs-split { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1.5rem; align-items: start; }
+  .vs-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 0; margin-bottom: 0.75rem; }
+  .vs-label.old { color: var(--red); }
+  .vs-label.new { color: var(--accent2); }
+  .vs-divider { display: flex; align-items: flex-start; padding-top: 1.75rem; color: var(--muted); font-weight: 700; font-size: 1rem; }
+  .vs-item { font-size: 0.875rem; color: var(--muted); line-height: 1.5; padding: 0.4rem 0; border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
+  .vs-item.bad::before { content: '✕'; color: var(--red); flex-shrink: 0; }
+  .vs-item.good::before { content: '✓'; color: var(--accent2); flex-shrink: 0; }
+
+  /* Slide-specific layout helpers */
+  .fill { flex: 1; }
+  .mt1 { margin-top: 1rem; }
+  .mt2 { margin-top: 2rem; }
+  .mt3 { margin-top: 3rem; }
+
+  /* Slide 1 — title */
+  .title-slide { justify-content: center; }
+  .title-slide .kicker { font-family: var(--mono); font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; letter-spacing: 0.05em; }
+  .title-slide h1 { font-size: clamp(3rem, 7vw, 5.5rem); margin-bottom: 1.5rem; }
+  .title-slide h1 em { font-style: normal; color: var(--accent); }
+  .title-slide .subtitle { font-size: 1.2rem; color: var(--muted); line-height: 1.6; max-width: 42ch; }
+  .title-slide .tagline { margin-top: 3rem; font-family: var(--mono); font-size: 12px; color: var(--border2); }
+
+  /* Glitch / visual accent */
+  .bg-glyph {
+    position: absolute; right: 4rem; top: 50%; transform: translateY(-50%);
+    font-family: var(--mono); font-size: 18rem; font-weight: 300;
+    color: rgba(167,139,250,0.04); pointer-events: none; letter-spacing: -0.05em;
+    line-height: 1; user-select: none;
+  }
+
+  /* Slide 9 — open floor */
+  .open-q { font-size: clamp(1.8rem, 3.5vw, 2.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+  .open-q em { font-style: normal; color: var(--accent); }
+
+  @media (max-width: 768px) {
+    .slide { padding: 2rem; }
+    .two-col, .three-col, .vs-split { grid-template-columns: 1fr; }
+    .bg-glyph { display: none; }
+  }
+
+  /* Keyboard hint */
+  .key-hint {
+    position: fixed; bottom: 2rem; right: 2rem;
+    font-family: var(--mono); font-size: 11px; color: var(--border2);
+    pointer-events: none;
+  }
+  .key-hint kbd {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 4px; padding: 2px 6px; color: var(--muted);
+    font-family: var(--mono);
+  }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1: Title -->
+  <div class="slide title-slide active" data-index="0">
+    <div class="bg-glyph">&lt;/&gt;</div>
+    <div class="kicker">Folk Tech Project Showcase</div>
+    <h1>Break Free<br>from the <em>Document</em></h1>
+    <div class="subtitle">
+      The web was built for pages. Your app isn't a page.<br>
+      BFTML is a new set of standards built from the right foundation.
+    </div>
+    <div class="tagline">// reactive · wasm-native · explicit by default</div>
+  </div>
+
+  <!-- SLIDE 2: Discussion opener -->
+  <div class="slide" data-index="1">
+    <div class="eyebrow">Opening discussion</div>
+    <div class="line-accent"></div>
+    <h2>What's the most frustrating thing<br>about building for the web?</h2>
+    <div class="fill"></div>
+    <div class="discussion-chips">
+      <div class="chip">Why does CSS even cascade?</div>
+      <div class="chip">How many frameworks do I need?</div>
+      <div class="chip">Why is this silent by default?</div>
+      <div class="chip">Where did my layout go?</div>
+      <div class="chip">Why is everything so implicit?</div>
+      <div class="chip">Which framework this year?</div>
+    </div>
+    <div class="body mt2">
+      Open to the room — devs and non-devs both. There are no wrong answers.
+    </div>
+    <div class="fill"></div>
+  </div>
+
+  <!-- SLIDE 3: The pain points -->
+  <div class="slide" data-index="2">
+    <div class="eyebrow">The problem</div>
+    <div class="line-accent"></div>
+    <h2>We've all felt this</h2>
+    <div class="three-col mt3">
+      <div class="pain-card html">
+        <div class="badge orange">HTML</div>
+        <div class="items">
+          <div class="item">Inconsistent tag syntax — some self-close, some don't</div>
+          <div class="item">Silent failure renders broken results</div>
+          <div class="item">Implicit layout you didn't ask for</div>
+        </div>
+      </div>
+      <div class="pain-card css">
+        <div class="badge" style="border-color:#60a5fa;color:#60a5fa;">CSS</div>
+        <div class="items">
+          <div class="item">Specificity wars no one wins</div>
+          <div class="item">Invisible failures — nothing renders, no error</div>
+          <div class="item">Implicit defaults hiding your bugs</div>
+        </div>
+      </div>
+      <div class="pain-card js">
+        <div class="badge" style="border-color:#facc15;color:#facc15;">JS</div>
+        <div class="items">
+          <div class="item">Framework churn — new winner every 18 months</div>
+          <div class="item">Forced on everyone, even those who'd choose otherwise</div>
+          <div class="item">DOM can be touched from anywhere, by anything</div>
+        </div>
+      </div>
+    </div>
+    <div class="body mt3">
+      These aren't skill issues. They're symptoms of building the wrong thing on the wrong foundation.
+    </div>
+  </div>
+
+  <!-- SLIDE 4: The historical argument -->
+  <div class="slide" data-index="3">
+    <div class="eyebrow orange">The diagnosis</div>
+    <div class="line-accent orange"></div>
+    <div class="two-col">
+      <div>
+        <h2>The web was built<br>for documents</h2>
+        <div class="large-body mt2">
+          The metaphors are <strong>extensions of the printed page.</strong><br><br>
+          Early websites looked like print. Some still do.<br><br>
+          But YouTube, Discord, Bluesky — <strong>these are not documents.</strong>
+        </div>
+      </div>
+      <div class="timeline mt1">
+        <div class="tl-item">
+          <div class="tl-dot"><span>90s</span></div>
+          <div class="tl-content">
+            <h3>HTML + CSS + JS</h3>
+            <p>Document object model. Print metaphors. Separation of concerns for static content.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"><span>00s</span></div>
+          <div class="tl-content">
+            <h3>Dynamic elements added</h3>
+            <p>JS grew the DOM API. Ajax arrived. Sites started behaving like apps — awkwardly.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"><span>10s</span></div>
+          <div class="tl-content">
+            <h3>Framework explosion</h3>
+            <p>React, Angular, Vue invented the component model on top of the document model. Styling frameworks appeared. Markup, style, and behavior merged — violating the separation of concerns the standards were built around.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"><span>now</span></div>
+          <div class="tl-content">
+            <h3>Rust → WASM → JS bindings → DOM</h3>
+            <p>Developers would rather write Rust that compiles to WASM and generates JS bindings just to avoid using JS directly.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: The key insight -->
+  <div class="slide" data-index="4">
+    <div class="eyebrow orange">The key insight</div>
+    <div class="line-accent orange"></div>
+    <h2 style="max-width: 18ch;">Two abstractions.<br>Neither produces the other.</h2>
+    <div class="vs-split mt3">
+      <div>
+        <div class="vs-label old">Document abstraction</div>
+        <div class="vs-item bad">Static hierarchy of content</div>
+        <div class="vs-item bad">Implicit layout and styling</div>
+        <div class="vs-item bad">Concerns separated across files</div>
+        <div class="vs-item bad">No native statefulness</div>
+      </div>
+      <div class="vs-divider">⊥</div>
+      <div>
+        <div class="vs-label new">Component abstraction</div>
+        <div class="vs-item good">Reusable, stateful, self-contained</div>
+        <div class="vs-item good">Explicit behavior by design</div>
+        <div class="vs-item good">Markup, style, behavior together</div>
+        <div class="vs-item good">Interactivity is first-class</div>
+      </div>
+    </div>
+    <div class="body mt3">
+      These are orthogonal. The browser has been awkwardly expanding one toward the other for 30 years.<br>
+      <strong>No amount of expansion of one abstraction naturally produces the other.</strong>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: BFTML intro -->
+  <div class="slide" data-index="5">
+    <div class="eyebrow green">The vision</div>
+    <div class="line-accent green"></div>
+    <div class="two-col">
+      <div>
+        <h2>BFTML</h2>
+        <div class="large-body mt2">
+          A new set of web standards that starts from the <strong>component abstraction</strong> — not as a destination the platform is expanding toward, but as the <strong>foundation from the beginning.</strong>
+        </div>
+        <div class="body mt2">
+          A modern markup language designed and optimized for making web apps. Not documents that happen to behave like apps.
+        </div>
+      </div>
+      <div>
+        <div class="code-block">
+          <span class="comment">// A button in BFTML</span><br>
+          <span class="tag">&lt;event</span> <span class="attr">onclick</span>=<span class="val">subscribe()</span><span class="tag">&gt;</span><br>
+          &nbsp;&nbsp;<span class="tag">&lt;box</span> <span class="attr">color</span>=<span class="val">red</span><span class="tag">&gt;</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;text</span> <span class="attr">color</span>=<span class="val">white</span><span class="tag">&gt;</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SUBSCRIBE<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;/text&gt;</span><br>
+          &nbsp;&nbsp;<span class="tag">&lt;/box&gt;</span><br>
+          <span class="tag">&lt;/event&gt;</span>
+        </div>
+        <div class="body mt2" style="font-size:0.9rem;">
+          Every element has exactly one responsibility. Behavior, layout, style, and content are separate primitives — composed explicitly, not implied.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: The four pillars -->
+  <div class="slide" data-index="6">
+    <div class="eyebrow green">Design principles</div>
+    <div class="line-accent green"></div>
+    <h2 class="mt1">Built on four pillars</h2>
+    <div class="three-col mt3" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="principle-card">
+        <div class="label">01 — Correct abstraction</div>
+        <h3>Component-first</h3>
+        <p>Web apps deserve their own standards, not a document platform that's been awkwardly extended for three decades.</p>
+      </div>
+      <div class="principle-card">
+        <div class="label">02 — Single responsibility</div>
+        <h3>One job per element</h3>
+        <p><code>&lt;box&gt;</code> draws a box. <code>&lt;outline&gt;</code> draws an outline. <code>&lt;event&gt;</code> handles input. Each primitive does exactly one thing.</p>
+      </div>
+      <div class="principle-card">
+        <div class="label">03 — Consistent syntax</div>
+        <h3>No surprises</h3>
+        <p>All tags follow the same grammar. Self-closing requires explicit syntax — always. Two stages of errors: syntax errors and tag errors. No silent ambiguity.</p>
+      </div>
+      <div class="principle-card">
+        <div class="label">04 — Explicitness</div>
+        <h3>Loud by default</h3>
+        <p>No implicit defaults hiding bugs. Invalid code renders visible error regions — not dysfunctional silent output. Fallbacks must be explicitly opted into.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: WASM native -->
+  <div class="slide" data-index="7">
+    <div class="eyebrow green">The runtime</div>
+    <div class="line-accent green"></div>
+    <div class="two-col">
+      <div>
+        <h2>Write components<br>in any language</h2>
+        <div class="large-body mt2">
+          BFTML provides a <strong>WASM-native runtime</strong> that can directly manipulate markup — no JS bridge required.
+        </div>
+        <div class="body mt2">
+          Components are scoped to their subtree. No global DOM access. The safety and structure of a component framework, without the lock-in of a single language.
+        </div>
+        <div class="discussion-chips mt2">
+          <div class="chip">Rust</div>
+          <div class="chip">Go</div>
+          <div class="chip">Zig</div>
+          <div class="chip">C</div>
+          <div class="chip">Swift</div>
+          <div class="chip">Whatever you like</div>
+        </div>
+      </div>
+      <div>
+        <div class="principle-card" style="margin-bottom:1rem;">
+          <div class="label">Primitive elements</div>
+          <h3>Compiled to WASM</h3>
+          <p>The foundational layer — <code>&lt;box&gt;</code>, <code>&lt;text&gt;</code>, <code>&lt;row&gt;</code>, <code>&lt;grid&gt;</code> — compiled for performance. GPU access via WASI interface. Custom primitives supported.</p>
+        </div>
+        <div class="principle-card">
+          <div class="label">Component layer</div>
+          <h3>Also WASM</h3>
+          <p>Components composed from primitives are also WASM modules. No interpreted layer, no runtime language lock-in — the same model applies at every level of the stack.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: Reactive model -->
+  <div class="slide" data-index="8">
+    <div class="eyebrow green">The runtime</div>
+    <div class="line-accent green"></div>
+    <div class="two-col">
+      <div>
+        <h2>Reactive by design,<br>cheap by default</h2>
+        <div class="large-body mt2">
+          BFTML's render model has three phases, each with a distinct job.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:1.75rem;">
+          <div class="principle-card" style="border-left:2px solid var(--accent3);border-radius:0 10px 10px 0;">
+            <div class="label">Phase 1 — load</div>
+            <h3>Static tree construction</h3>
+            <p>Components are stitched into a single element tree. This structure persists for the lifetime of the app — it is never rebuilt.</p>
+          </div>
+          <div class="principle-card" style="border-left:2px solid var(--accent);border-radius:0 10px 10px 0;">
+            <div class="label">Phase 2 — state change</div>
+            <h3>Push-reactive dirty flags</h3>
+            <p>When state changes, affected nodes are immediately marked dirty. No polling. No scheduled diffing. The flag is set at the moment of change.</p>
+          </div>
+          <div class="principle-card" style="border-left:2px solid var(--accent2);border-radius:0 10px 10px 0;">
+            <div class="label">Phase 3 — render</div>
+            <h3>Lazy traversal + cached renderers</h3>
+            <p>At render time the tree is traversed. Clean nodes reuse their cached <code>Renderer</code> — a fully assembled pipeline, instance buffer, and bind groups — and call <code>render()</code> directly. Dirty nodes rebuild and cache.</p>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;justify-content:center;">
+        <div style="position:relative;">
+          <svg width="100%" viewBox="0 0 320 480" xmlns="http://www.w3.org/2000/svg" style="font-family:'DM Mono',monospace;">
+            <defs>
+              <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </marker>
+            </defs>
+            <!-- Root node -->
+            <rect x="100" y="20" width="120" height="40" rx="8" fill="#18181f" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+            <text x="160" y="44" text-anchor="middle" font-size="12" fill="#e8e6f0" font-weight="500">root</text>
+            <!-- Level 2 -->
+            <rect x="30" y="110" width="100" height="40" rx="8" fill="#18181f" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+            <text x="80" y="134" text-anchor="middle" font-size="12" fill="#e8e6f0" font-weight="500">nav</text>
+            <rect x="190" y="110" width="100" height="40" rx="8" fill="#18181f" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+            <text x="240" y="134" text-anchor="middle" font-size="12" fill="#e8e6f0" font-weight="500">main</text>
+            <!-- Level 3 — dirty node highlighted -->
+            <rect x="10" y="210" width="90" height="40" rx="8" fill="#18181f" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+            <text x="55" y="234" text-anchor="middle" font-size="11" fill="#7a7889">logo</text>
+            <!-- clean badge -->
+            <rect x="14" y="248" width="42" height="16" rx="4" fill="rgba(110,231,183,0.1)" stroke="rgba(110,231,183,0.3)" stroke-width="0.5"/>
+            <text x="35" y="259" text-anchor="middle" font-size="9" fill="#6ee7b7">clean</text>
+
+            <rect x="160" y="210" width="100" height="40" rx="8" fill="#1e1630" stroke="#a78bfa" stroke-width="1.5"/>
+            <text x="210" y="234" text-anchor="middle" font-size="11" fill="#a78bfa" font-weight="500">counter</text>
+            <!-- dirty badge -->
+            <rect x="163" y="248" width="36" height="16" rx="4" fill="rgba(167,139,250,0.15)" stroke="rgba(167,139,250,0.4)" stroke-width="0.5"/>
+            <text x="181" y="259" text-anchor="middle" font-size="9" fill="#a78bfa">dirty</text>
+
+            <rect x="270" y="210" width="40" height="40" rx="8" fill="#18181f" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+            <text x="290" y="234" text-anchor="middle" font-size="11" fill="#7a7889">…</text>
+
+            <!-- Connectors -->
+            <line x1="160" y1="60" x2="80" y2="110" stroke="rgba(255,255,255,0.12)" stroke-width="0.5" marker-end="url(#arr2)"/>
+            <line x1="160" y1="60" x2="240" y2="110" stroke="rgba(255,255,255,0.12)" stroke-width="0.5" marker-end="url(#arr2)"/>
+            <line x1="80" y1="150" x2="55" y2="210" stroke="rgba(255,255,255,0.12)" stroke-width="0.5" marker-end="url(#arr2)"/>
+            <line x1="240" y1="150" x2="210" y2="210" stroke="rgba(167,139,250,0.4)" stroke-width="1" marker-end="url(#arr2)"/>
+            <line x1="240" y1="150" x2="290" y2="210" stroke="rgba(255,255,255,0.12)" stroke-width="0.5" marker-end="url(#arr2)"/>
+
+            <!-- State change arrow -->
+            <line x1="210" y1="340" x2="210" y2="268" stroke="#a78bfa" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
+            <rect x="148" y="348" width="124" height="36" rx="8" fill="rgba(167,139,250,0.08)" stroke="rgba(167,139,250,0.3)" stroke-width="0.5"/>
+            <text x="210" y="364" text-anchor="middle" font-size="10" fill="#a78bfa">state.count = 5</text>
+            <text x="210" y="378" text-anchor="middle" font-size="9" fill="#7a7889">→ marks counter dirty</text>
+
+            <!-- Render pass label -->
+            <rect x="20" y="410" width="280" height="54" rx="8" fill="rgba(110,231,183,0.05)" stroke="rgba(110,231,183,0.15)" stroke-width="0.5"/>
+            <text x="160" y="430" text-anchor="middle" font-size="10" fill="#6ee7b7" font-weight="500">render pass</text>
+            <text x="160" y="446" text-anchor="middle" font-size="9" fill="#7a7889">logo → reuse Renderer  ·  counter → rebuild Renderer + cache</text>
+            <text x="160" y="459" text-anchor="middle" font-size="9" fill="#7a7889">only one node pays render cost</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: Dev tools -->
+  <div class="slide" data-index="9">
+    <div class="eyebrow green">The developer experience</div>
+    <div class="line-accent green"></div>
+    <div class="two-col">
+      <div>
+        <h2>Debug the app,<br>not the runtime</h2>
+        <div class="large-body mt2">
+          WASM is an implementation detail. You should <strong>never have to see it</strong> in your dev tools.
+        </div>
+        <div class="body mt2">
+          All behavior in BFTML routes through signals. That's what the dev tools surfaces — not bytecode, not a virtual DOM diff, not a framework's internal state tree.
+        </div>
+        <div class="body mt2">
+          The abstraction is clean enough that the <strong>debug surface matches how you reason about your app.</strong>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div class="principle-card" style="border-left:2px solid var(--accent);border-radius:0 10px 10px 0;">
+          <div class="label">Signal graph</div>
+          <h3>See the reactive topology</h3>
+          <p>Visualize which signals exist, what they depend on, and how they connect — the live wiring diagram of your app's reactive state.</p>
+        </div>
+        <div class="principle-card" style="border-left:2px solid var(--accent);border-radius:0 10px 10px 0;">
+          <div class="label">Dirty flag propagation</div>
+          <h3>Watch state flow in real time</h3>
+          <p>As state changes, see exactly which nodes get marked dirty, in what order, and which draw commands get recomputed as a result.</p>
+        </div>
+        <div class="principle-card" style="border-left:2px solid var(--accent);border-radius:0 10px 10px 0;">
+          <div class="label">The principle</div>
+          <h3>One abstraction, all the way down</h3>
+          <p>Signals are how you write behavior. Signals are how you debug behavior. The layer you think in and the layer you inspect are the same layer.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: ATProto component registry -->
+  <div class="slide" data-index="10">
+    <div class="eyebrow" style="color:#0085ff;">The ecosystem</div>
+    <div class="line-accent" style="background:#0085ff;"></div>
+    <div class="two-col">
+      <div>
+        <h2>A decentralized<br>component registry</h2>
+        <div class="large-body mt2">
+          Package registries are centralized choke points. BFTML's component ecosystem is built on <strong>ATProto</strong> — the same protocol that powers Bluesky.
+        </div>
+        <div class="body mt2">
+          Developers publish components to their own personal data server. No single company owns the registry. No single point of failure. Your components live where your data lives — with you.
+        </div>
+        <div class="body mt2">
+          AppViews aggregate those components and serve them in the same way you'd use npm or crates.io today — searchable, versioned, installable. Except the underlying data is open and portable.
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div class="principle-card" style="border-left:2px solid #0085ff;border-radius:0 10px 10px 0;">
+          <div class="label">Personal Data Server (PDS)</div>
+          <h3>You own your components</h3>
+          <p>Every developer publishes to their own PDS — a server they control. Components are records in your personal data repository, signed with your identity. No platform can unpublish them.</p>
+        </div>
+        <div class="principle-card" style="border-left:2px solid #0085ff;border-radius:0 10px 10px 0;">
+          <div class="label">AppView</div>
+          <h3>Aggregation without lock-in</h3>
+          <p>AppViews crawl the network of PDSes and index components into a searchable, browsable registry — like npm, but built on open data anyone can re-aggregate. Competing AppViews can coexist.</p>
+        </div>
+        <div class="principle-card" style="border-left:2px solid #0085ff;border-radius:0 10px 10px 0;">
+          <div class="label">The pattern</div>
+          <h3>Familiar interface, open infrastructure</h3>
+          <p>Install components the same way you would today. The difference is what's underneath — a federated network of personal servers rather than a corporate-owned registry with terms of service.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: Open discussion -->
+  <div class="slide" data-index="11">
+    <div class="eyebrow">Open floor</div>
+    <div class="line-accent"></div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+      <div class="open-q">
+        If the platform <em>got out of your way</em>,<br>
+        what would you build?
+      </div>
+      <div class="body mt3">
+        What's the app you keep starting and abandoning because the tooling is too painful?<br>
+        What would you build differently if you could define the primitives?
+      </div>
+      <div style="margin-top:2rem;padding:1.25rem 1.5rem;background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--accent);border-radius:0 10px 10px 0;">
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:0.5rem;">Sequel project</div>
+        <div style="font-size:1rem;font-weight:600;color:var(--text);margin-bottom:0.35rem;">A Figma-style editor for functioning components</div>
+        <div style="font-size:0.875rem;color:var(--muted);line-height:1.6;">Because BFTML's primitives are explicit, composable, and have single responsibilities, a visual editor that produces real, runnable components — not design mockups — becomes tractable. The properties you'd manipulate in the editor map directly to the properties in the markup.</div>
+      </div>
+    </div>
+    <div class="fill"></div>
+    <div style="border-top:1px solid var(--border); padding-top:1.5rem;">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.08em;margin-bottom:0.5rem;">BFTML IS LOOKING FOR</div>
+      <div class="discussion-chips">
+        <div class="chip">Early testers</div>
+        <div class="chip">Primitive authors</div>
+        <div class="chip">Compiler nerds</div>
+        <div class="chip">Language designers</div>
+        <div class="chip">People who hate CSS</div>
+        <div class="chip">People who love Rust</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prev-btn" onclick="prevSlide()">← prev</button>
+  <div class="dots" id="dots"></div>
+  <div class="slide-counter" id="counter">1 / 12</div>
+  <button id="next-btn" onclick="nextSlide()">next →</button>
+</div>
+
+<div class="key-hint"><kbd>←</kbd> <kbd>→</kbd> to navigate</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+let current = 0;
+
+function buildDots() {
+  const container = document.getElementById('dots');
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    container.appendChild(d);
+  });
+}
+
+function updateNav() {
+  document.getElementById('counter').textContent = `${current + 1} / ${slides.length}`;
+  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
+}
+
+function goTo(idx) {
+  slides[current].classList.remove('active');
+  slides[current].classList.add('exit');
+  setTimeout(() => slides[current - (idx > current ? 0 : -1) + (idx > current ? -1 : 1)]?.classList.remove('exit'), 400);
+  current = idx;
+  slides.forEach((s, i) => {
+    s.classList.remove('active', 'exit');
+    if (i === current) s.classList.add('active');
+  });
+  updateNav();
+}
+
+function nextSlide() { if (current < slides.length - 1) goTo(current + 1); }
+function prevSlide() { if (current > 0) goTo(current - 1); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+  if (e.key === 'ArrowLeft') prevSlide();
+});
+
+buildDots();
+updateNav();
+</script>
+</body>
+</html>
