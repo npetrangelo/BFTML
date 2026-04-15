@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-glyphon = "0.10.0"
-indexmap = "2.13.0"
+glyphon = "0.11.0"
+indexmap = "2.14.0"
 pollster = "0.4.0"
 # tree_iters_rs = "3.6.0"
-wgpu = "28.0.0"
+wgpu = "29.0.1"
 wgpu_macros = { version = "0.1.0", path = "wgpu-macros" }
-winnow = "0.7.15"
+winnow = "1.0.1"
 winit = { version = "0.30.13", features = ["rwh_05"] }
-zerocopy = { version = "0.8.40", features = [ "derive" ]}
+zerocopy = { version = "0.8.48", features = [ "derive" ]}

@@ -1,5 +1,5 @@
 use wgpu::{BindGroup, BufferUsages, Device, RenderPass, RenderPipelineDescriptor, ShaderModule, ShaderModuleDescriptor, TextureFormat, util::{BufferInitDescriptor, DeviceExt}};
-use zerocopy::IntoBytes;
+use zerocopy::{Immutable, IntoBytes};
 
 use crate::{graphics::{Graphics, Shaders, Vertex, uniforms::{Binding, Bindings}}, procedural::{circle::Circle, rrect::RRect}};
 
@@ -19,7 +19,7 @@ pub enum Shapes {
 
 pub struct Renderer<'a> {
     pipeline: wgpu::RenderPipeline,
-    instances: wgpu::Buffer,
+    pub instances: wgpu::Buffer,
     number: u32,
     bindgroups: Vec<&'a BindGroup>,
 }
@@ -37,7 +37,6 @@ impl Renderer<'_> {
 }
 
 pub trait IntoRenderer<I: Vertex> {
-    // const SHADER: ShaderModuleDescriptor<'static>;
     const VERTEX: &'static str;
     const FRAGMENT: &'static str;
 
@@ -51,12 +50,12 @@ pub trait IntoRenderer<I: Vertex> {
 
         let (bind_group_layouts, bind_groups): (Vec<_>, Vec<_>) = self.bind(&graphics.bindings)
             .into_iter()
-            .map(|bg| (&bg.layout, &bg.group))
+            .map(|bg| (Some(&bg.layout), &bg.group))
             .unzip();
 
         let layout = graphics.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
-            bind_group_layouts: &bind_group_layouts,
+            bind_group_layouts: bind_group_layouts.as_slice(),
             immediate_size: 0,
         });
 
@@ -104,7 +103,7 @@ pub trait IntoRenderer<I: Vertex> {
             instances: graphics.device.create_buffer_init(&BufferInitDescriptor {
                 label: Some("instances"),
                 contents: instances.as_bytes(),
-                usage: BufferUsages::VERTEX
+                usage: BufferUsages::VERTEX | BufferUsages::COPY_DST
             }),
             number: instances.len() as u32,
             bindgroups: bind_groups,

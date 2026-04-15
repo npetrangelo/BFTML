@@ -31,7 +31,7 @@ impl Shaders {
 
 pub struct Graphics {
     pub device: wgpu::Device,
-    queue: wgpu::Queue,
+    pub queue: wgpu::Queue,
     surface: wgpu::Surface<'static>,
     pub config: wgpu::SurfaceConfiguration,
     pub uniforms: Uniforms,
@@ -41,10 +41,7 @@ pub struct Graphics {
 
 impl Graphics {
     pub fn new(window: Arc<Window>) -> Self {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::all(),
-            ..Default::default()
-        });
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
 
         let size = window.inner_size(); // Grab size before window is moved
         let scale = window.scale_factor();
@@ -107,7 +104,7 @@ impl Graphics {
         unsafe {
             if let Some(hal_surface) = surface.as_hal::<wgpu::hal::api::Metal>() {
                 let guard = hal_surface.render_layer().lock();
-                guard.set_presents_with_transaction(true);
+                guard.setPresentsWithTransaction(true);
             }
         }
 
@@ -126,40 +123,47 @@ impl Graphics {
         t.renderer(&self)
     }
 
-    pub fn render(&self, renderers: &[Renderer]) -> Result<(), wgpu::SurfaceError> {
-        let output = self.surface.get_current_texture()?;
-        let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Render Encoder"),
-        });
-        {
-            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    // depth_slice: None, uncomment when wgpu 26 compiles
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(BLACK),
-                        store: wgpu::StoreOp::Store,
-                    },
-                    depth_slice: None,
-                })],
-                depth_stencil_attachment: None,
-                occlusion_query_set: None,
-                timestamp_writes: None,
-                multiview_mask: None,
-            });
-            for renderer in renderers {
-                renderer.render(&mut pass);
+    pub fn render(&self, renderers: &[Renderer]) {
+        use wgpu::CurrentSurfaceTexture::*;
+        match self.surface.get_current_texture() {
+            Success(output) | Suboptimal(output) => {
+                let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
+                let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                    label: Some("Render Encoder"),
+                });
+                {
+                    let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                        label: Some("Render Pass"),
+                        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                            view: &view,
+                            // depth_slice: None, uncomment when wgpu 26 compiles
+                            resolve_target: None,
+                            ops: wgpu::Operations {
+                                load: wgpu::LoadOp::Clear(BLACK),
+                                store: wgpu::StoreOp::Store,
+                            },
+                            depth_slice: None,
+                        })],
+                        depth_stencil_attachment: None,
+                        occlusion_query_set: None,
+                        timestamp_writes: None,
+                        multiview_mask: None,
+                    });
+                    for renderer in renderers {
+                        renderer.render(&mut pass);
+                    }
+                }
+
+                // submit will accept anything that implements IntoIter
+                self.queue.submit(std::iter::once(encoder.finish()));
+                output.present();
             }
+            Timeout => println!("Timeout"),
+            Occluded => println!("Occluded"),
+            Outdated => println!("Outdated"),
+            Lost => println!("Lost"),
+            Validation => println!("Validation"),
         }
-
-        // submit will accept anything that implements IntoIter
-        self.queue.submit(std::iter::once(encoder.finish()));
-        output.present();
-
-        Ok(())
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
